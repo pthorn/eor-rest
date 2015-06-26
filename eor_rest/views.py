@@ -192,7 +192,7 @@ class RestViews(object):
         self.delegate.after_create_obj(obj, deserialized)
 
         try:
-            obj.add(flush=True)
+            obj.rest_add(flush=True)
         except SQLAlchemyError as e:
             log.error('rest update(): database error when saving: %s', e)
             return self._error_response(exception=e)
@@ -241,7 +241,7 @@ class RestViews(object):
         self.delegate.after_update_obj(obj, deserialized)
 
         try:
-            obj.add(flush=True)
+            obj.rest_add(flush=True)
         except SQLAlchemyError as e:
             log.error('rest update(): database error when saving: %s', e)
             return self._error_response(exception=e)
@@ -262,7 +262,7 @@ class RestViews(object):
             return self._error_response(key='object-not-found')
 
         try:
-            obj.delete()
+            obj.rest_delete(flush=True)
             return {'status': 'ok'}
         except SQLAlchemyError as e:
             return self._error_response(exception=e)

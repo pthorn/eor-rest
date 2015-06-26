@@ -16,8 +16,8 @@ class RestDelegate(object):  #, metaclass=RestDelegateMeta):
 
     name = None  # 'entity' -> /rest/entities, /rest/entity/{id} etc.
     entity = None # models.Entity
-    entity_getter = 'get_by_id'
-    entity_list_getter = 'get_for_rest_grid'  # TODO RestMixin?
+    entity_getter = 'rest_get_by_id'
+    entity_list_getter = 'rest_get_list'
     permission = None
 
     def __init__(self, views):
