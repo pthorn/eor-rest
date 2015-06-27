@@ -3,6 +3,22 @@
 import sqlalchemy
 
 
+def _is_sequence(arg):
+    """
+    see http://stackoverflow.com/questions/10160416/json-serialization-of-sqlalchemy-association-proxies
+    """
+    return not hasattr(arg, "strip") and (hasattr(arg, "__getitem__") or hasattr(arg, "__iter__"))
+
+
+def _serialize_value(val):
+    """
+    serializes associaltion proxies to simple lists
+    """
+    if _is_sequence(val):
+        return list(val)
+    return val
+
+
 def serialize_sqlalchemy_obj(obj, field_spec=None):
     """
     serialize sqlalchemy object
@@ -34,7 +50,7 @@ def serialize_sqlalchemy_obj(obj, field_spec=None):
     res = dict()
     for key in fields:
         if isinstance(key, str):
-            res[key] = getattr(obj, key)
+            res[key] = _serialize_value(getattr(obj, key))
         else:
             p = obj
             r = res
@@ -43,7 +59,7 @@ def serialize_sqlalchemy_obj(obj, field_spec=None):
                 if el not in r:
                     r[el] = dict()
                 r = r[el]
-            r[key[-1]] = getattr(p, key[-1])
+            r[key[-1]] = _serialize_value(getattr(p, key[-1]))
 
     return res
 
