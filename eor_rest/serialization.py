@@ -1,6 +1,11 @@
 # coding: utf-8
 
+import logging
+log = logging.getLogger(__name__)
+
 import sqlalchemy
+from sqlalchemy.orm.properties import ColumnProperty, RelationshipProperty
+from sqlalchemy.ext.associationproxy import _AssociationCollection
 
 
 def _is_sequence(arg):
@@ -68,10 +73,28 @@ def serialize_sqlalchemy_list(lst, field_spec=None):
     return [serialize_sqlalchemy_obj(e, field_spec) for e in lst]
 
 
-class _do_not_set(object): pass
-do_not_set = _do_not_set()
+def update_one_to_many(entity, key, appstruct):
+    pass
 
-def update_entity_from_appstruct(entity, appstruct):
+
+def update_entity_from_appstruct(obj, appstruct):
+    obj_name = obj.__class__.__name__
+    mapper = sqlalchemy.inspect(obj.__class__)
+
     for key, val in appstruct.items():
-        if val is not do_not_set:
-            setattr(entity, key, val)
+        try:
+            obj_attr = getattr(obj, key)
+        except AttributeError:
+            log.warn('attribute not present in object, skipped: %s.%s', obj_name, key)
+            continue
+
+        prop = mapper.attrs.get(key)  # does not exist for association proxies
+
+        if isinstance(prop, ColumnProperty):
+            setattr(obj, key, val)
+        elif isinstance(obj_attr, _AssociationCollection):
+            setattr(obj, key, val)
+        elif isinstance(prop, RelationshipProperty):
+            update_one_to_many(obj, key, val)
+        else:
+            log.warn('unknown property type, skipped: %s.%s [%s]', obj_name, key, prop)
