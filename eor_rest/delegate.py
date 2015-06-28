@@ -65,6 +65,9 @@ class RestDelegate(object):  #, metaclass=RestDelegateMeta):
     def get_id_from_request(self):
         return self.views.request.matchdict['id']
 
+    def get_id_from_obj(self, obj):
+        return obj.id
+
     def get_obj_by_id(self):
         obj_id = self.get_id_from_request()
         return getattr(self.get_entity(), self.entity_getter)(obj_id)

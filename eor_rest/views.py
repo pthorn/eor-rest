@@ -152,7 +152,7 @@ class RestViews(object):
 
     def create(self):
         """
-        PUT /prefix/{entity}/{id}
+        POST /prefix/{entity}
         """
 
         # TODO check origin?
@@ -168,11 +168,6 @@ class RestViews(object):
 
         # check existing
 
-        try:
-            self.delegate.get_obj_by_id()
-            return self._error_response(key='object-already-exists')
-        except NoResultFound:
-            pass
 
         # create object
 
@@ -197,7 +192,7 @@ class RestViews(object):
             log.error('rest update(): database error when saving: %s', e)
             return self._error_response(exception=e)
 
-        return {'status': 'ok', 'id': obj.id}  # TODO
+        return {'status': 'ok', 'id': self.delegate.get_id_from_obj(obj)}
 
     def update(self):
         """
