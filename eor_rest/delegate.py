@@ -26,9 +26,13 @@ class RestDelegate(object):  #, metaclass=RestDelegateMeta):
     def get_entity(self):
         return self.entity
 
-    def get_obj_list(self):
+    def get_obj_list(self, **extra_getter_args):
+        """
+        :param extra_getter_args: additional args for self.entity_list_getter
+        :return:
+        """
         request = self.views.request
-        
+
         # TODO calculates args from request and calls getter in the same method - difficult to override
         try:
             start = int(request.params['s'])
@@ -52,13 +56,11 @@ class RestDelegate(object):  #, metaclass=RestDelegateMeta):
             if param.startswith('f'):
                 filters[param[1:]] = val
 
-        get_args = None  # TODO!! additional args for self.entity_list_getter
-        if not get_args:
-            get_args = dict()
-    
-        # returns count, objs
+        # returns (count, objs)
         return getattr(self.get_entity(), self.entity_list_getter)(
-            start, limit, order=order, search=search, filters=filters or None, **get_args)
+            start=start, limit=limit, order=order, search=search,
+            filters=filters or None, **extra_getter_args
+        )
 
     def get_id_from_request(self):
         return self.views.request.matchdict['id']
