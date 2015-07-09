@@ -76,7 +76,7 @@ class RestDelegate(object):  #, metaclass=RestDelegateMeta):
         return self.entity()
 
     def get_fields_for_coll(self):
-        return ['*']
+        return {'*': True}
 
     def get_query_for_coll(self):  # TODO query logic into get_list_for_rest
         return ['*']
@@ -85,7 +85,7 @@ class RestDelegate(object):  #, metaclass=RestDelegateMeta):
         return ['*']
 
     def get_fields_for_obj(self):
-        return ['*']
+        return {'*': True}
 
     def get_schema(self):
         return Schema({}, required=True)

@@ -24,52 +24,60 @@ def _serialize_value(val):
     return val
 
 
-def serialize_sqlalchemy_obj(obj, field_spec=None):
+def serialize_sqlalchemy_obj(obj, field_spec):
     """
     serialize sqlalchemy object
 
     :param obj: sqlalchemy object
-    :param field_spec: list of field names: ['*', '-a', '-b', 'rel.foo'] or ['c', 'd', 'rel.foo']
-    :return: serislized structure
+    :param field_spec: dictionary
+       example: {'*', True, 'a': False, 'b': False, 'c': {...}}
+    :return: serialized structure
     """
-
-    include_all = field_spec is None or field_spec[0] == '*'
-
-    if field_spec[0] == '*':
-        field_spec = field_spec[1:]
-
+    obj_name = obj.__class__.__name__
     mapper = sqlalchemy.inspect(obj.__class__)
 
-    fields = []
-    if include_all:
-        fields = [p.key for p in mapper.iterate_properties if isinstance(p, sqlalchemy.orm.properties.ColumnProperty)]
+    try:
+        include_all_own = field_spec.get('*', False)
+    except AttributeError as e:
+        log.error('serialize_sqlalchemy_obj(): bad field_spec: %r', field_spec)
+        raise
 
-    fields.extend(el for el in field_spec if not el.startswith('-'))
+    fields = {}
 
-    to_remove = frozenset(el[1:] for el in field_spec if el.startswith('-'))
-    fields = (el for el in fields if el not in to_remove)
+    if include_all_own:
+        for p in mapper.column_attrs:
+            fields[p.key] = True
 
-    fields = (el.split('.') if el.find('.') != -1 else el for el in fields)
+    fields.update(field_spec)
 
-    # TODO complete hierarchical serialization!
     res = dict()
-    for key in fields:
-        if isinstance(key, str):
-            res[key] = _serialize_value(getattr(obj, key))
+
+    for key, control in fields.items():
+        if control == False:
+            continue
+
+        try:
+            obj_attr = getattr(obj, key)
+        except AttributeError:
+            log.warn('attribute not present in object, skipped: %s.%s', obj_name, key)
+            continue
+
+        prop = mapper.attrs.get(key)  # does not exist for association proxies
+
+        if isinstance(control, dict):
+            if prop.uselist:
+                res[key] = serialize_sqlalchemy_list(obj_attr, control)
+            else:
+                res[key] = serialize_sqlalchemy_obj(obj_attr, control)
+        elif control == True:
+            res[key] = _serialize_value(obj_attr)
         else:
-            p = obj
-            r = res
-            for el in key[:-1]:
-                p = getattr(p, el)
-                if el not in r:
-                    r[el] = dict()
-                r = r[el]
-            r[key[-1]] = _serialize_value(getattr(p, key[-1]))
+            log.error('bad control value %r, skipped: %s.%s', control, obj_name, key)
 
     return res
 
 
-def serialize_sqlalchemy_list(lst, field_spec=None):
+def serialize_sqlalchemy_list(lst, field_spec):
     return [serialize_sqlalchemy_obj(e, field_spec) for e in lst]
 
 
