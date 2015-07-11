@@ -15,12 +15,16 @@ def _is_sequence(arg):
     return not hasattr(arg, "strip") and (hasattr(arg, "__getitem__") or hasattr(arg, "__iter__"))
 
 
-def _serialize_value(val):
+def _serialize_value(val, func=None):
     """
     serializes associaltion proxies to simple lists
     """
+    if func:
+        val = func(val)
+
     if _is_sequence(val):
         return list(val)
+
     return val
 
 
@@ -69,6 +73,8 @@ def serialize_sqlalchemy_obj(obj, field_spec):
                 res[key] = serialize_sqlalchemy_list(obj_attr, control)
             else:
                 res[key] = serialize_sqlalchemy_obj(obj_attr, control)
+        elif callable(control):
+            res[key] = _serialize_value(obj_attr, control)
         elif control == True:
             res[key] = _serialize_value(obj_attr)
         else:
