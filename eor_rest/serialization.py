@@ -87,8 +87,37 @@ def serialize_sqlalchemy_list(lst, field_spec):
     return [serialize_sqlalchemy_obj(e, field_spec) for e in lst]
 
 
-def update_one_to_many(entity, key, appstruct):
-    pass
+def update_one_to_many(containing_obj, key, appstruct):
+    mapper = sqlalchemy.inspect(containing_obj.__class__)
+    prop = getattr(mapper.attrs, key)
+    target_entity = prop.mapper.class_
+    collection = getattr(containing_obj, key)
+
+    obj_ids = [el['id'] for el in appstruct]  # TODO id
+
+    if True:  # add existing
+        objs_to_keep = target_entity.rest_get_by_ids(obj_ids)
+    else:
+        objs_to_keep = [obj for obj in collection if obj.id in obj_ids]
+
+    if False:  # add new
+        for el in appstruct:
+            if el['id'] not in objs_to_keep:
+                new_obj = target_entity()
+                update_entity_from_appstruct(new_obj, el)
+                objs_to_keep.append(new_obj)
+
+    for obj in objs_to_keep:
+        if obj not in collection:
+            collection.append(obj)
+
+    objects_to_remove = []
+    for obj in collection:
+        if obj not in objs_to_keep:
+            objects_to_remove.append(obj)
+
+    for obj in objects_to_remove:
+        collection.remove(obj)
 
 
 def update_entity_from_appstruct(obj, appstruct):
@@ -109,6 +138,11 @@ def update_entity_from_appstruct(obj, appstruct):
         elif isinstance(obj_attr, _AssociationCollection):
             setattr(obj, key, val)
         elif isinstance(prop, RelationshipProperty):
-            update_one_to_many(obj, key, val)
+            # TODO property.direction = ONETOMANY, MANYTOMANY; property.uselist
+            log.debug('updating relationship property: %s.%s, uselist=%r', obj_name, key, prop.uselist)
+            if prop.uselist:
+                update_one_to_many(obj, key, val)
+            else:
+                log.warn('uswlist==False is not yet supported')
         else:
             log.warn('unknown property type, skipped: %s.%s [%s]', obj_name, key, prop)
