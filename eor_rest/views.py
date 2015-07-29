@@ -27,7 +27,7 @@ class RestViews(object):
         """
         def decorate(delegate):
             if delegate.name is None:
-                raise ValueError('RestViews.register(): %r must have attribute "name"' % delegate)
+                delegate.name = delegate.__name__.lower()
 
             if delegate.entity is None:
                 raise ValueError('RestViews.register(): %r must have attribute "entity"' % delegate)
