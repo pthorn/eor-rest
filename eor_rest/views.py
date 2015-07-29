@@ -13,7 +13,7 @@ from pyramid.httpexceptions import HTTPNotFound, HTTPMethodNotAllowed
 from pyramid.session import check_csrf_token
 
 from .delegate import DeserializationException
-from .serialization import serialize_sqlalchemy_obj, serialize_sqlalchemy_list, update_entity_from_appstruct
+from .serialization import update_entity_from_appstruct
 
 
 class RestViews(object):
@@ -133,7 +133,7 @@ class RestViews(object):
         return {
             'status': 'ok',
             'count': count,
-            'data': serialize_sqlalchemy_list(lst, field_spec=self.delegate.get_fields_for_coll())
+            'data': self.delegate.serialize_coll(lst)
         }
 
     def get_by_id(self):
@@ -147,7 +147,7 @@ class RestViews(object):
 
         return {
             'status': 'ok',
-            'data': serialize_sqlalchemy_obj(obj, field_spec=self.delegate.get_fields_for_obj())
+            'data': self.delegate.serialize_obj(obj)
         }
 
     def create(self):

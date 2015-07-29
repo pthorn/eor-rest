@@ -10,6 +10,7 @@ class DeserializationException(Exception):
 
     def __init__(self, exc):
         self.exc = exc
+from .serialization import serialize_sqlalchemy_obj, serialize_sqlalchemy_list
 
 
 class RestDelegate(object):  #, metaclass=RestDelegateMeta):
@@ -86,6 +87,12 @@ class RestDelegate(object):  #, metaclass=RestDelegateMeta):
 
     def get_fields_for_obj(self):
         return {'*': True}
+
+    def serialize_obj(self, obj):
+        return serialize_sqlalchemy_obj(obj, field_spec=self.get_fields_for_obj())
+
+    def serialize_coll(self, lst):
+        return serialize_sqlalchemy_list(lst, field_spec=self.get_fields_for_coll())
 
     def get_schema(self):
         return Schema({}, required=True)
