@@ -50,6 +50,12 @@ class RestViews(object):
         """
         RestViews.configure(config, group='site', url_prefix='/rest', factory=ebff('admin-panel'))
         """
+        if group not in cls.delegates:
+            if group == 'default':
+                return
+            else:
+                raise RuntimeError('group %r does not exist' % group)
+
         for delegate_name, delegate in cls.delegates[group].items():
             # example: eor.rest.default.user.get
             route_name = lambda suffix: 'eor.rest.%s.%s.%s' % (group, delegate_name, suffix)
