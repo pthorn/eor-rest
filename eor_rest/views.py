@@ -116,6 +116,10 @@ class RestViews(object):
         self.json = None  # for delegate
         self.obj = None   # for delegate
 
+        if not request.matched_route.name.startswith('eor.rest'):
+            log.error('RestViews: bad route name: %r', route_name)
+            raise HTTPNotFound()
+
         route_name = request.matched_route.name.split('.')  # eor.rest.default.user.get
         group = route_name[2]
         entity_name = route_name[3]
