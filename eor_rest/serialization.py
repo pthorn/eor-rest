@@ -57,7 +57,7 @@ def serialize_sqlalchemy_obj(obj, field_spec):
     res = dict()
 
     for key, control in fields.items():
-        if control == False:
+        if key == '*' or control == False:
             continue
 
         try:
