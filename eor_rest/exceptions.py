@@ -3,18 +3,33 @@
 
 class RESTException(Exception):
 
-    def __init__(self, msg=None, exc=None):
+    def __init__(self, status=None, key=None, msg=None, exc=None):
+        slf.status = status or 'error'
+        self.key = key
         self.msg = msg
         self.exc = exc
 
+
 class OriginException(RESTException):
-    pass
+
+    def __init__(self):
+        super().__init__()
+
 
 class CSRFException(RESTException):
-    pass
+
+    def __init__(self):
+        super().__init__()
+
 
 class DeserializationException(RESTException):
-    pass
+
+    def __init__(self):
+        super().__init__(*args, status='bad-json')
+
 
 class ValidationException(RESTException):
-    pass
+
+    def __init__(self, exc):
+        # TODO process exc!
+        super().__init__(*args, key='invalid')
