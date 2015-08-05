@@ -5,11 +5,7 @@ log = logging.getLogger(__name__)
 
 from voluptuous import Schema, Required, All, MultipleInvalid, Invalid
 
-
-class DeserializationException(Exception):
-
-    def __init__(self, exc):
-        self.exc = exc
+from .exceptions import *
 from .serialization import serialize_sqlalchemy_obj, serialize_sqlalchemy_list
 
 
@@ -71,7 +67,11 @@ class RestDelegate(object):  #, metaclass=RestDelegateMeta):
 
     def get_obj_by_id(self):
         obj_id = self.get_id_from_request()
-        return getattr(self.get_entity(), self.entity_getter)(obj_id)
+
+        try:
+            return getattr(self.get_entity(), self.entity_getter)(obj_id)
+        except NoResultFound:
+            raise RESTException(key='object-not-found')
 
     def create_obj(self):
         return self.entity()
@@ -101,7 +101,7 @@ class RestDelegate(object):  #, metaclass=RestDelegateMeta):
         try:
             return self.get_schema()(serialized)
         except MultipleInvalid as e:
-            raise DeserializationException(e)  # TODO
+            raise ValidationException(e)
 
     def after_create_obj(self, obj, deserialized):
         pass
