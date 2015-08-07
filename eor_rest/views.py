@@ -12,7 +12,7 @@ from pyramid.renderers import render_to_response
 from pyramid.httpexceptions import HTTPNotFound, HTTPMethodNotAllowed
 from pyramid.session import check_csrf_token
 
-from .delegate import DeserializationException
+from .exceptions import *
 from .serialization import update_entity_from_appstruct
 
 
@@ -286,24 +286,40 @@ class RestViews(object):
         raise HTTPMethodNotAllowed()
 
     @classmethod
-    def _error_response(cls, key=None, message=None, exception=None):
+    def _error_response(cls, status=None, key=None, message=None):
         """
         return a JSON response with error information
         """
-        resp = {'status': 'error'}
+
+        resp = {'status': status or 'error'}
 
         if key:
             resp['key'] = key
-        elif exception:
-            resp['key'] = 'internal-error'
 
         if message:
             resp['message'] = message
 
-        if exception:
-            resp['message'] = str(exception)
+        return resp
 
-        # TODO return {'status': 'error', 'message': u'Ошибка базы данных при удалении\n' + unicode(e).replace(u"' {'", u"'\n{'")}
+    @classmethod
+    def _exception_response(cls, exception):
+        """
+        return a JSON response for an exception
+        """
+        # TODO sqlalchemy error: unicode(e).replace(u"' {'", u"'\n{'")}
+
+        resp = {}
+
+        if isinstance(exception, RESTException):
+            resp['status'] = exception.status
+            if exception.key:
+                resp['key'] = exception.key
+            if exception.msg:
+                resp['message'] = exception.msg
+        else:
+            resp['status'] = 'internal-error'
+            resp['message'] = str(exception)  # TODO only in release mode?
+            # TODO send traceback?
 
         return resp
 
@@ -325,8 +341,8 @@ class RestViews(object):
             try:
                 return view_handler(context, request)
             except Exception as e:
-                log.error('rest: unhandled exception: ', e)
-                # TODO status?
-                return render_to_response('json', cls._error_response(exception=e), request=request)
+                if not isinstance(e, RESTException):
+                    log.error('rest: unhandled exception: ', e)
+                return render_to_response('json', cls._exception_response(e), request=request)
 
         return replacement
