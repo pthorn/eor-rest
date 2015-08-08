@@ -196,11 +196,7 @@ class RestViews(object):
 
         self.delegate.after_create_obj(obj, deserialized)
 
-        try:
-            obj.rest_add(flush=True)
-        except SQLAlchemyError as e:
-            log.error('rest update(): database error when saving: %s', e)
-            return self._error_response(exception=e)
+        obj.rest_add(flush=True)
 
         return {'status': 'ok', 'id': self.delegate.get_id_from_obj(obj)}
 
@@ -224,10 +220,7 @@ class RestViews(object):
 
         # get object by id
 
-        try:
-            obj = self.obj = self.delegate.get_obj_by_id()
-        except NoResultFound:
-            return self._error_response(key='object-not-found')
+        obj = self.obj = self.delegate.get_obj_by_id()
 
         # deserialize
 
@@ -245,11 +238,7 @@ class RestViews(object):
 
         self.delegate.after_update_obj(obj, deserialized)
 
-        try:
-            obj.rest_add(flush=True)
-        except SQLAlchemyError as e:
-            log.error('rest update(): database error when saving: %s', e)
-            return self._error_response(exception=e)
+        obj.rest_add(flush=True)
 
         return {'status': 'ok', 'id': obj.id}  # TODO
 
@@ -261,10 +250,7 @@ class RestViews(object):
         # TODO check origin?
         check_csrf_token(self.request)  # TODO proper response
 
-        try:
-            obj = self.obj = self.delegate.get_obj_by_id()
-        except NoResultFound:
-            return self._error_response(key='object-not-found')
+        obj = self.obj = self.delegate.get_obj_by_id()
 
         try:
             obj.rest_delete(flush=True)
