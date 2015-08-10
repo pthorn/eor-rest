@@ -112,8 +112,16 @@ class RestDelegate(object):  #, metaclass=RestDelegateMeta):
     def after_update_obj(self, obj, deserialized):
         pass
 
-    def before_delete(self):
-        return True
+    # delete
+
+    def before_delete(self, obj):
+        """
+        Can interrupt delete by raising RESTException
+        """
+        pass
+
+    def delete_obj(self, obj):
+        obj.rest_delete(flush=True)
 
     def after_delete(self):
         pass

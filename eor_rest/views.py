@@ -252,11 +252,13 @@ class RestViews(object):
 
         obj = self.obj = self.delegate.get_obj_by_id()
 
-        try:
-            obj.rest_delete(flush=True)
-            return {'status': 'ok'}
-        except SQLAlchemyError as e:
-            return self._error_response(exception=e)
+        self.delegate.before_delete(obj)
+
+        self.delegate.delete_obj(obj)
+
+        self.delegate.after_delete()
+
+        return {'status': 'ok'}
 
     def custom_view_handler(self):
         """
