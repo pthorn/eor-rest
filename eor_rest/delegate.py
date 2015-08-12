@@ -117,10 +117,15 @@ class RestDelegate(object):  #, metaclass=RestDelegateMeta):
     def after_create(self, obj, deserialized):
         pass
 
-    def before_update_obj(self, obj, deserialized):
-        return True
+    # update
 
-    def after_update_obj(self, obj, deserialized):
+    def before_update(self, obj, deserialized):
+        """
+        Can interrupt update by raising RESTException
+        """
+        pass
+
+    def after_update(self, obj, deserialized):
         pass
 
     # delete

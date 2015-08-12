@@ -233,16 +233,15 @@ class RestViews(object):
 
         # update object
 
-        if not self.delegate.before_update_obj(obj, deserialized):
-            return {'status': 'ok'}  # TODO
+        self.delegate.before_update(obj, deserialized)
 
         update_entity_from_appstruct(obj, deserialized)
 
-        self.delegate.after_update_obj(obj, deserialized)
-
         obj.rest_add(flush=True)
 
-        return {'status': 'ok', 'id': obj.id}  # TODO
+        self.delegate.after_update(obj, deserialized)
+
+        return {'status': 'ok'}
 
     def delete(self):
         """
