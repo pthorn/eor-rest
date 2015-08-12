@@ -192,11 +192,13 @@ class RestViews(object):
 
         # update object
 
-        update_entity_from_appstruct(obj, deserialized)  # TODO do not pass args - accessible in self.views.<...> ?
+        self.delegate.before_create(obj, deserialized)
 
-        self.delegate.after_create_obj(obj, deserialized)
+        update_entity_from_appstruct(obj, deserialized)
 
         obj.rest_add(flush=True)
+
+        self.delegate.after_create(obj, deserialized)
 
         return {'status': 'ok', 'id': self.delegate.get_id_from_obj(obj)}
 

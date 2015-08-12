@@ -73,9 +73,6 @@ class RestDelegate(object):  #, metaclass=RestDelegateMeta):
         except NoResultFound:
             raise RESTException(key='object-not-found')
 
-    def create_obj(self):
-        return self.entity()
-
     def get_fields_for_coll(self):
         return {'*': True}
 
@@ -103,7 +100,21 @@ class RestDelegate(object):  #, metaclass=RestDelegateMeta):
         except MultipleInvalid as e:
             raise ValidationException(e)
 
-    def after_create_obj(self, obj, deserialized):
+    # create
+
+    def create_obj(self):
+        """
+        Create entity object, do not save to database
+        """
+        return self.entity()
+
+    def before_create(self, obj, deserialized):
+        """
+        Can interrupt creation by raising RESTException
+        """
+        pass
+
+    def after_create(self, obj, deserialized):
         pass
 
     def before_update_obj(self, obj, deserialized):
