@@ -22,10 +22,10 @@ class CSRFException(RESTException):
         super().__init__()
 
 
-class DeserializationException(RESTException):
+class RequestParseException(RESTException):
 
-    def __init__(self):
-        super().__init__(*args, status='bad-json')
+    def __init__(self, exc=None):
+        super().__init__(*args, status='bad-json', exc=exc)
 
 
 class ValidationException(RESTException):

@@ -168,13 +168,9 @@ class RestViews(object):
         # TODO check origin?
         check_csrf_token(self.request)  # TODO proper response
 
-        if self.request.content_type != 'application/json':
-            return self._error_response(key='bad-content-type')
+        # parse request body
 
-        try:
-            json = self.json = self.request.json_body
-        except ValueError as e:
-            return self._error_response(key='bad-json', exception=e)
+        json = self.json = self.delegate.parse_request_body()
 
         # check existing
 
@@ -212,13 +208,7 @@ class RestViews(object):
 
         # parse request body
 
-        if self.request.content_type != 'application/json':
-            return self._error_response(key='bad-content-type')
-
-        try:
-            json = self.json = self.request.json_body
-        except ValueError as e:
-            return self._error_response(key='bad-json', exception=e)
+        json = self.json = self.delegate.parse_request_body()
 
         # get object by id
 

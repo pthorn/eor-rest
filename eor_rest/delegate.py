@@ -20,6 +20,15 @@ class RestDelegate(object):  #, metaclass=RestDelegateMeta):
     def __init__(self, views):
         self.views = views
 
+    def parse_request_body(self):
+        if self.views.request.content_type != 'application/json':
+            raise RequestParseException()
+
+        try:
+            return self.views.request.json_body
+        except ValueError as e:
+            raise RequestParseException(e)
+
     def get_entity(self):
         return self.entity
 
