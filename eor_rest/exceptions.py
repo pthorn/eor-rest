@@ -4,10 +4,19 @@
 class RESTException(Exception):
 
     def __init__(self, status=None, key=None, msg=None, exc=None):
-        slf.status = status or 'error'
+        self.status = status or 'error'
         self.key = key
         self.msg = msg
         self.exc = exc
+
+    def response(self):
+        resp = {'status': self.status}
+        if self.key:
+            resp['key'] = self.key
+        if self.msg:
+            resp['message'] = self.msg
+
+        return resp
 
 
 class OriginException(RESTException):

@@ -287,18 +287,14 @@ class RestViews(object):
         """
         # TODO sqlalchemy error: unicode(e).replace(u"' {'", u"'\n{'")}
 
-        resp = {}
-
         if isinstance(exception, RESTException):
-            resp['status'] = exception.status
-            if exception.key:
-                resp['key'] = exception.key
-            if exception.msg:
-                resp['message'] = exception.msg
-        else:
-            resp['status'] = 'internal-error'
-            resp['message'] = str(exception)  # TODO only in release mode?
-            # TODO send traceback?
+            return exception.response()
+
+        resp = {
+            'status': 'internal-error',
+            'message': str(exception)
+        }
+        # TODO send traceback?
 
         return resp
 
