@@ -40,5 +40,22 @@ class RequestParseException(RESTException):
 class ValidationException(RESTException):
 
     def __init__(self, exc):
-        # TODO process exc!
-        super().__init__(*args, key='invalid')
+        super().__init__(key='invalid', exc=exc)
+
+
+    def response(self):
+        resp = super().response()
+
+        errors = {}
+        for exc in self.exc.errors:
+            d = errors
+            for el in exc.path[:-1]:
+                if not el in d:
+                    d[el] = {}
+                d = d[el]
+
+            d[exc.path[-1]] = exc.error_message
+
+        resp['errors'] = errors
+
+        return resp

@@ -181,10 +181,7 @@ class RestViews(object):
 
         # deserialize
 
-        try:
-            deserialized = self.delegate.deserialize(json)
-        except DeserializationException as e:
-            return {'status': 'invalid', 'errors': str(e)}  # TODO report server validation errors properly!
+        deserialized = self.delegate.deserialize(json)
 
         # update object
 
@@ -216,10 +213,7 @@ class RestViews(object):
 
         # deserialize
 
-        try:
-            deserialized = self.delegate.deserialize(json)
-        except DeserializationException as e:
-            return {'status': 'invalid', 'errors': str(e)}  # TODO report server validation errors properly!
+        deserialized = self.delegate.deserialize(json)
 
         # update object
 
