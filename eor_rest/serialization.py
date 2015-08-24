@@ -6,6 +6,7 @@ log = logging.getLogger(__name__)
 import sqlalchemy
 from sqlalchemy.orm.properties import ColumnProperty, RelationshipProperty
 from sqlalchemy.ext.associationproxy import _AssociationCollection
+from sqlalchemy.orm.interfaces import ONETOMANY, MANYTOONE, MANYTOMANY
 
 
 def _is_sequence(arg):
@@ -88,36 +89,80 @@ def serialize_sqlalchemy_list(lst, field_spec):
 
 
 def update_one_to_many(containing_obj, key, appstruct):
+    """
+    Update a collection attribute.
+
+    :param containing_obj: sqlalchemy entity object
+    :param key: string, such that getattr(containing_obj, key) returns the collection attribute
+    :param appstruct:  list of dicts with or without ID fields, e.g. [{'id': 1, 'name': 'Foo'}, {'name': 'Bar'}]
+    :return: nothing
+    """
+
+    collection = getattr(containing_obj, key)
+
     mapper = sqlalchemy.inspect(containing_obj.__class__)
     prop = getattr(mapper.attrs, key)
     target_entity = prop.mapper.class_
-    collection = getattr(containing_obj, key)
 
-    obj_ids = [el['id'] for el in appstruct]  # TODO id
+    # TODO id
+    # TODO check that appstruct is a list of dicts [and has key 'id'  - it may not for new objects!]
+    obj_ids = [el['id'] for el in appstruct]
 
     if True:  # add existing
+        # add all existing objects with these IDs whether they're already in collection or not
+        # TODO security: attacker may specify IDs of objects that belong to another user, they will be reconnected to his containing_obj
+        # TODO (may not be relevant to many-to-many relatinoships?)
         objs_to_keep = target_entity.rest_get_by_ids(obj_ids)
     else:
+        # keep only those objects which already are in collection
+        # TODO when is this necessary???
         objs_to_keep = [obj for obj in collection if obj.id in obj_ids]
 
-    if False:  # add new
+    #for el in appstruct:
+    #    if el['id'] in objs_to_keep:
+    #        obj = objs_to_keep[]
+    #        update_entity_from_appstruct(obj, el)
+
+    # create new objects
+
+    if False:
         for el in appstruct:
             if el['id'] not in objs_to_keep:
                 new_obj = target_entity()
-                update_entity_from_appstruct(new_obj, el)
+                update_entity_from_appstruct(new_obj, el)  # TODO ???
                 objs_to_keep.append(new_obj)
+
+    # add objects to collection
 
     for obj in objs_to_keep:
         if obj not in collection:
             collection.append(obj)
 
-    objects_to_remove = []
-    for obj in collection:
-        if obj not in objs_to_keep:
-            objects_to_remove.append(obj)
+    # remove objects from collection
+
+    objects_to_remove = [obj for obj in collection if obj not in objs_to_keep]
 
     for obj in objects_to_remove:
         collection.remove(obj)
+
+
+def update_many_to_many(containing_obj, key, appstruct):
+    """
+
+    :param containing_obj:
+    :param key:
+    :param appstruct: list of IDs, like [1, 2, 3]
+    :return:
+    """
+
+    #collection = getattr(containing_obj, key)
+
+    mapper = sqlalchemy.inspect(containing_obj.__class__)
+    prop = getattr(mapper.attrs, key)
+    target_entity = prop.mapper.class_
+
+    objs_to_keep = target_entity.rest_get_by_ids(appstruct)
+    setattr(containing_obj, key, objs_to_keep)
 
 
 def update_entity_from_appstruct(obj, appstruct):
@@ -134,15 +179,23 @@ def update_entity_from_appstruct(obj, appstruct):
         prop = mapper.attrs.get(key)  # does not exist for association proxies
 
         if isinstance(prop, ColumnProperty):
+            #print(key, 'PROP:', prop, type(prop), 'ATTR:', obj_attr, type(obj_attr), 'CLASS ATTR:',  getattr(obj.__class__, key), type(getattr(obj.__class__, key)))
             setattr(obj, key, val)
         elif isinstance(obj_attr, _AssociationCollection):
+            # gdt AssociationProxy: getattr(obj.__class__, key)
+            log.debug('updating association proxy: %s.%s', obj_name, key)
             setattr(obj, key, val)
         elif isinstance(prop, RelationshipProperty):
-            # TODO property.direction = ONETOMANY, MANYTOMANY; property.uselist
-            log.debug('updating relationship property: %s.%s, uselist=%r', obj_name, key, prop.uselist)
-            if prop.uselist:
+            if not prop.uselist:
+                log.warn('relationship property %s.%s: uselist==False not yet supported', obj_name, key, prop.direction)
+                continue
+            if prop.direction == ONETOMANY:
+                log.debug('updating relationship property %s.%s, one to many', obj_name, key)
                 update_one_to_many(obj, key, val)
+            elif prop.direction == MANYTOMANY:
+                log.debug('updating relationship property %s.%s, many to many', obj_name, key)
+                update_many_to_many(obj, key, val)
             else:
-                log.warn('uswlist==False is not yet supported')
+                log.warn('updating relationship property %s.%s: direction %r not yet supported', obj_name, key, prop.direction)
         else:
             log.warn('unknown property type, skipped: %s.%s [%s]', obj_name, key, prop)
