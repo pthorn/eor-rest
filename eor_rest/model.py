@@ -16,6 +16,12 @@ class RestMixin(object):
             .one())
 
     @classmethod
+    def rest_get_by_ids(cls, ids):
+        return (config.sqlalchemy_session().query(cls)
+            .filter(cls.id.in_(ids))
+            .all())
+
+    @classmethod
     def rest_get_count(cls):
         return config.sqlalchemy_session().query(cls).count()
 
