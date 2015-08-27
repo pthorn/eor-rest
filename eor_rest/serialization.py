@@ -53,7 +53,17 @@ def serialize_sqlalchemy_obj(obj, field_spec):
         for p in mapper.column_attrs:
             fields[p.key] = True
 
+    for k in mapper.attrs.keys():
+        info = mapper.all_orm_descriptors[k].info
+        if 'er_serialize' in info:
+            fields[k] = info['er_serialize']
+
     fields.update(field_spec)
+
+    for k in mapper.attrs.keys():
+        info = mapper.all_orm_descriptors[k].info
+        if 'er_ser_fn' in info and fields.get(k) == True:
+            fields[k] = info['er_ser_fn']
 
     res = dict()
 
