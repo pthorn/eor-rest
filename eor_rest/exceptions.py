@@ -3,16 +3,16 @@
 
 class RESTException(Exception):
 
-    def __init__(self, status=None, key=None, msg=None, exc=None):
+    def __init__(self, status=None, code=None, msg=None, exc=None):
         self.status = status or 'error'
-        self.key = key
+        self.code = code
         self.msg = msg
         self.exc = exc
 
     def response(self):
         resp = {'status': self.status}
-        if self.key:
-            resp['key'] = self.key
+        if self.code:
+            resp['code'] = self.code
         if self.msg:
             resp['message'] = self.msg
 
@@ -40,7 +40,7 @@ class RequestParseException(RESTException):
 class ValidationException(RESTException):
 
     def __init__(self, exc):
-        super().__init__(key='invalid', exc=exc)
+        super().__init__(code='invalid', exc=exc)
 
 
     def response(self):

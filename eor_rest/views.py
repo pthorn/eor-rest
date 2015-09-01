@@ -153,7 +153,7 @@ class RestViews(object):
         try:
             obj = self.delegate.get_obj_by_id()
         except NoResultFound:
-            return self._error_response(key='object-not-found')
+            return self._error_response(code='object-not-found')
 
         return {
             'status': 'ok',
@@ -259,15 +259,15 @@ class RestViews(object):
         raise HTTPMethodNotAllowed()
 
     @classmethod
-    def _error_response(cls, status=None, key=None, message=None):
+    def _error_response(cls, status=None, code=None, message=None):
         """
         return a JSON response with error information
         """
 
         resp = {'status': status or 'error'}
 
-        if key:
-            resp['key'] = key
+        if code:
+            resp['code'] = code
 
         if message:
             resp['message'] = message
