@@ -82,7 +82,7 @@ class RestDelegate(object):  #, metaclass=RestDelegateMeta):
         try:
             return getattr(self.get_entity(), self.entity_getter)(obj_id)
         except NoResultFound:
-            raise RESTException(key='object-not-found')
+            raise RESTException(code='object-not-found')
 
     def get_fields_for_coll(self):
         return {'*': True}
