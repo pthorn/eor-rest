@@ -3,6 +3,8 @@
 import logging
 log = logging.getLogger(__name__)
 
+from sqlalchemy.orm.exc import NoResultFound
+
 from voluptuous import Schema, Required, All, MultipleInvalid, Invalid
 
 from .exceptions import *
