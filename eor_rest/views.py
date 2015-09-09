@@ -193,7 +193,7 @@ class RestViews(object):
 
         self.delegate.after_create(obj, deserialized)
 
-        return {'status': 'ok', 'id': self.delegate.get_id_from_obj(obj)}
+        return self.delegate.create_response(obj)
 
     def update(self):
         """
@@ -225,7 +225,7 @@ class RestViews(object):
 
         self.delegate.after_update(obj, deserialized)
 
-        return {'status': 'ok'}
+        return self.delegate.update_response(obj)
 
     def delete(self):
         """
@@ -243,7 +243,7 @@ class RestViews(object):
 
         self.delegate.after_delete()
 
-        return {'status': 'ok'}
+        return self.delegate.delete_response(obj)
 
     def custom_view_handler(self):
         """

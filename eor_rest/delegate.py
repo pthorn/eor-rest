@@ -128,6 +128,12 @@ class RestDelegate(object):  #, metaclass=RestDelegateMeta):
     def after_create(self, obj, deserialized):
         pass
 
+    def create_response(self, obj):
+        return {
+            'status': 'ok',
+            'id': self.get_id_from_obj(obj)
+        }
+
     # update
 
     def before_update(self, obj, deserialized):
@@ -138,6 +144,9 @@ class RestDelegate(object):  #, metaclass=RestDelegateMeta):
 
     def after_update(self, obj, deserialized):
         pass
+
+    def update_response(self, obj):
+        return {'status': 'ok'}
 
     # delete
 
@@ -152,3 +161,6 @@ class RestDelegate(object):  #, metaclass=RestDelegateMeta):
 
     def after_delete(self):
         pass
+
+    def delete_response(self, obj):
+        return {'status': 'ok'}
