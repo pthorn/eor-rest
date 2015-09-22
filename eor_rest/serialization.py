@@ -116,28 +116,28 @@ def update_one_to_many(containing_obj, key, appstruct):
 
     # TODO id
     # TODO check that appstruct is a list of dicts [and has key 'id'  - it may not for new objects!]
-    obj_ids = [el['id'] for el in appstruct]
+    appstructs_by_key = {el['id']: el for el in appstruct}
 
     if True:  # add existing
         # add all existing objects with these IDs whether they're already in collection or not
         # TODO security: attacker may specify IDs of objects that belong to another user, they will be reconnected to his containing_obj
         # TODO (may not be relevant to many-to-many relatinoships?)
-        objs_to_keep = target_entity.rest_get_by_ids(obj_ids)
+        objs_to_keep = target_entity.rest_get_by_ids(appstructs_by_key.keys())
     else:
         # keep only those objects which already are in collection
         # TODO when is this necessary???
-        objs_to_keep = [obj for obj in collection if obj.id in obj_ids]
+        objs_to_keep = [obj for obj in collection if obj.id in appstructs_by_key]
 
-    #for el in appstruct:
-    #    if el['id'] in objs_to_keep:
-    #        obj = objs_to_keep[]
-    #        update_entity_from_appstruct(obj, el)
+    # update existing objects
+
+    for obj in objs_to_keep:
+        update_entity_from_appstruct(obj, appstructs_by_key[obj.id])
 
     # create new objects
 
     if False:
-        for el in appstruct:
-            if el['id'] not in objs_to_keep:
+        for el_id, el in appstructs_by_key.items():
+            if el_id not in objs_to_keep:
                 new_obj = target_entity()
                 update_entity_from_appstruct(new_obj, el)  # TODO ???
                 objs_to_keep.append(new_obj)
