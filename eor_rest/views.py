@@ -135,16 +135,8 @@ class RestViews(object):
         GET /prefix/{entity}[?qs]
         parameters:
         """
-        #try:
-        count, lst = self.delegate.get_obj_list()
-        #except SQLAlchemyError as e:
-        #    return {'status': 'error', 'message': str(e)}
 
-        return {
-            'status': 'ok',
-            'count': count,
-            'data': self.delegate.serialize_coll(lst)
-        }
+        return self.delegate.get_list_handler()
 
     def get_by_id(self):
         """

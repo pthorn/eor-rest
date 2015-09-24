@@ -111,6 +111,17 @@ class RestDelegate(object):  #, metaclass=RestDelegateMeta):
         except MultipleInvalid as e:
             raise ValidationException(e)
 
+    # get list
+
+    def get_list_handler(self):
+        count, lst = self.get_obj_list()
+
+        return {
+            'status': 'ok',
+            'count': count,
+            'data': self.serialize_coll(lst)
+        }
+
     # create
 
     def create_obj(self):
