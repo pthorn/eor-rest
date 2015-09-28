@@ -8,4 +8,5 @@ from .exceptions import RESTException, ValidationException
 
 
 def includeme(config):
-    pass
+    from .json import get_json_renderer
+    config.add_renderer('eor-rest-json', get_json_renderer(config))

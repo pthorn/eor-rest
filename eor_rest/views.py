@@ -77,11 +77,11 @@ class RestViews(object):
             config.add_route(route_name('create'),    url_pattern, request_method='POST', **kwargs)
             config.add_route(route_name('badmethod'), url_pattern, **kwargs)
 
-            config.add_view(cls, attr='get_list', route_name=route_name('get'), renderer='json',
+            config.add_view(cls, attr='get_list', route_name=route_name('get'), renderer='eor-rest-json',
                             decorator=cls.handler_decorator, permission=permission('get'))
-            config.add_view(cls, attr='create',  route_name=route_name('create'), renderer='json',
+            config.add_view(cls, attr='create',  route_name=route_name('create'), renderer='eor-rest-json',
                             decorator=cls.handler_decorator, permission=permission('create'))
-            config.add_view(cls, attr='bad_method',  route_name=route_name('badmethod'), renderer='json')
+            config.add_view(cls, attr='bad_method',  route_name=route_name('badmethod'), renderer='eor-rest-json')
 
             # item resource
 
@@ -92,13 +92,13 @@ class RestViews(object):
             config.add_route(route_name('delete'),     url_pattern, request_method='DELETE', **kwargs)
             config.add_route(route_name('badmethod2'), url_pattern, **kwargs)
 
-            config.add_view(cls, attr='get_by_id', route_name=route_name('getbyid'), renderer='json',
+            config.add_view(cls, attr='get_by_id', route_name=route_name('getbyid'), renderer='eor-rest-json',
                             decorator=cls.handler_decorator, permission=permission('getbyid'))
-            config.add_view(cls, attr='update',  route_name=route_name('update'), renderer='json',
+            config.add_view(cls, attr='update',  route_name=route_name('update'), renderer='eor-rest-json',
                             decorator=cls.handler_decorator, permission=permission('update'))
-            config.add_view(cls, attr='delete',  route_name=route_name('delete'), renderer='json',
+            config.add_view(cls, attr='delete',  route_name=route_name('delete'), renderer='eor-rest-json',
                             decorator=cls.handler_decorator, permission=permission('delete'))
-            config.add_view(cls, attr='bad_method',  route_name=route_name('badmethod2'), renderer='json')
+            config.add_view(cls, attr='bad_method',  route_name=route_name('badmethod2'), renderer='eor-rest-json')
 
             # custom methods TODO
 
