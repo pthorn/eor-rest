@@ -78,9 +78,9 @@ class RestViews(object):
             config.add_route(route_name('badmethod'), url_pattern, **kwargs)
 
             config.add_view(cls, attr='get_list', route_name=route_name('get'), renderer='eor-rest-json',
-                            decorator=cls.handler_decorator, permission=permission('get'))
+                            permission=permission('get'))
             config.add_view(cls, attr='create',  route_name=route_name('create'), renderer='eor-rest-json',
-                            decorator=cls.handler_decorator, permission=permission('create'))
+                            permission=permission('create'))
             config.add_view(cls, attr='bad_method',  route_name=route_name('badmethod'), renderer='eor-rest-json')
 
             # item resource
@@ -93,11 +93,11 @@ class RestViews(object):
             config.add_route(route_name('badmethod2'), url_pattern, **kwargs)
 
             config.add_view(cls, attr='get_by_id', route_name=route_name('getbyid'), renderer='eor-rest-json',
-                            decorator=cls.handler_decorator, permission=permission('getbyid'))
+                            permission=permission('getbyid'))
             config.add_view(cls, attr='update',  route_name=route_name('update'), renderer='eor-rest-json',
-                            decorator=cls.handler_decorator, permission=permission('update'))
+                            permission=permission('update'))
             config.add_view(cls, attr='delete',  route_name=route_name('delete'), renderer='eor-rest-json',
-                            decorator=cls.handler_decorator, permission=permission('delete'))
+                            permission=permission('delete'))
             config.add_view(cls, attr='bad_method',  route_name=route_name('badmethod2'), renderer='eor-rest-json')
 
             # custom methods TODO
@@ -266,24 +266,6 @@ class RestViews(object):
 
         return resp
 
-    @classmethod
-    def _exception_response(cls, exception):
-        """
-        return a JSON response for an exception
-        """
-        # TODO sqlalchemy error: unicode(e).replace(u"' {'", u"'\n{'")}
-
-        if isinstance(exception, RESTException):
-            return exception.response()
-
-        resp = {
-            'status': 'internal-error',
-            'message': str(exception)
-        }
-        # TODO send traceback?
-
-        return resp
-
     # TODO
     @classmethod
     def _check_origin(cls):
@@ -294,16 +276,6 @@ class RestViews(object):
     def _check_csrf(cls):
         pass
 
-    # TODO error view! this catches all exceptions
-    @classmethod
-    def handler_decorator(cls, view_handler):
 
-        def replacement(context, request):
-            try:
-                return view_handler(context, request)
-            except Exception as e:
-                if not isinstance(e, RESTException):
-                    log.error('rest: unhandled exception: ', e)
-                return render_to_response('json', cls._exception_response(e), request=request)
-
-        return replacement
+def exception_view(context, request):
+    return render_to_response('eor-rest-json', context.response(), request=request)

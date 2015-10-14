@@ -10,3 +10,6 @@ from .exceptions import RESTException, ValidationException
 def includeme(config):
     from .json import get_json_renderer
     config.add_renderer('eor-rest-json', get_json_renderer(config))
+
+    from .views import exception_view
+    config.add_view(exception_view, context=RESTException)
