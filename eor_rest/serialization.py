@@ -8,6 +8,8 @@ from sqlalchemy.orm.properties import ColumnProperty, RelationshipProperty
 from sqlalchemy.ext.associationproxy import _AssociationCollection
 from sqlalchemy.orm.interfaces import ONETOMANY, MANYTOONE, MANYTOMANY
 
+from .config import config
+
 
 def _is_sequence(arg):
     """
@@ -175,7 +177,7 @@ def update_many_to_many(containing_obj, key, appstruct):
     setattr(containing_obj, key, objs_to_keep)
 
 
-def update_entity_from_appstruct(obj, appstruct):
+def update_entity(obj, appstruct):
     obj_name = obj.__class__.__name__
     mapper = sqlalchemy.inspect(obj.__class__)
 
@@ -209,3 +211,8 @@ def update_entity_from_appstruct(obj, appstruct):
                 log.warn('updating relationship property %s.%s: direction %r not yet supported', obj_name, key, prop.direction)
         else:
             log.warn('unknown property type, skipped: %s.%s [%s]', obj_name, key, prop)
+
+
+def update_entity_from_appstruct(obj, appstruct):
+    with config.sqlalchemy_session.no_autoflush:
+        update_entity(obj, appstruct)
