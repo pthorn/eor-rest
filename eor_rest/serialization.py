@@ -40,6 +40,9 @@ def serialize_sqlalchemy_obj(obj, field_spec):
        example: {'*', True, 'a': False, 'b': False, 'c': {...}}
     :return: serialized structure
     """
+    if obj is None:
+        return None
+
     obj_name = obj.__class__.__name__
     mapper = sqlalchemy.inspect(obj.__class__)
 
