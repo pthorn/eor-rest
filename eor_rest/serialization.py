@@ -113,52 +113,33 @@ def update_one_to_many(containing_obj, key, appstruct):
     :return: nothing
     """
 
-    collection = getattr(containing_obj, key)
-
     mapper = sqlalchemy.inspect(containing_obj.__class__)
     prop = getattr(mapper.attrs, key)
     target_entity = prop.mapper.class_
 
-    # TODO id
-    # TODO check that appstruct is a list of dicts [and has key 'id'  - it may not for new objects!]
-    appstructs_by_key = {el['id']: el for el in appstruct}
+    target_id_attr = 'id'
 
-    if True:  # add existing
-        # add all existing objects with these IDs whether they're already in collection or not
-        # TODO security: attacker may specify IDs of objects that belong to another user, they will be reconnected to his containing_obj
-        # TODO (may not be relevant to many-to-many relatinoships?)
-        objs_to_keep = target_entity.rest_get_by_ids(appstructs_by_key.keys())
-    else:
-        # keep only those objects which already are in collection
-        # TODO when is this necessary???
-        objs_to_keep = [obj for obj in collection if obj.id in appstructs_by_key]
+    appstructs_by_id = {el[target_id_attr]: el for el in appstruct if target_id_attr in el}
+
+    objs_to_keep = target_entity.rest_get_related(appstructs_by_id.keys(), containing_obj)
+    objs_to_keep_by_id = {getattr(obj, target_id_attr): obj for obj in objs_to_keep}
 
     # update existing objects
-
     for obj in objs_to_keep:
-        update_entity_from_appstruct(obj, appstructs_by_key[obj.id])
+        update_entity_from_appstruct(obj, appstructs_by_id[getattr(obj, target_id_attr)])
 
     # create new objects
+    for el in appstruct:
+        if target_id_attr in el and el[target_id_attr] in objs_to_keep_by_id:
+            continue
 
-    if False:
-        for el_id, el in appstructs_by_key.items():
-            if el_id not in objs_to_keep:
-                new_obj = target_entity()
-                update_entity_from_appstruct(new_obj, el)  # TODO ???
-                objs_to_keep.append(new_obj)
+        new_obj = target_entity()
+        update_entity_from_appstruct(new_obj, el)
+        objs_to_keep.append(new_obj)
 
-    # add objects to collection
+    setattr(containing_obj, key, objs_to_keep)
 
-    for obj in objs_to_keep:
-        if obj not in collection:
-            collection.append(obj)
 
-    # remove objects from collection
-
-    objects_to_remove = [obj for obj in collection if obj not in objs_to_keep]
-
-    for obj in objects_to_remove:
-        collection.remove(obj)
 
 
 def update_many_to_many(containing_obj, key, appstruct):
