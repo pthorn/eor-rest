@@ -142,10 +142,7 @@ class RestViews(object):
         """
         GET /prefix/{entity}/{id}
         """
-        try:
-            obj = self.delegate.get_obj_by_id()
-        except NoResultFound:
-            return self._error_response(code='object-not-found')
+        obj = self.delegate.get_obj_by_id()
 
         return {
             'status': 'ok',
