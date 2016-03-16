@@ -2,6 +2,7 @@
 
 import datetime
 import decimal
+import uuid
 
 from pyramid.renderers import JSON
 
@@ -10,12 +11,10 @@ def configure_renderer(json):
     def datetime_adapter(obj, request):
         return obj.isoformat()
 
-    def decimal_adapter(obj, request):
-        return float(obj)
-
     json.add_adapter(datetime.date, datetime_adapter)
     json.add_adapter(datetime.datetime, datetime_adapter)
-    json.add_adapter(decimal.Decimal, decimal_adapter)
+    json.add_adapter(decimal.Decimal, lambda val, request: float(val))
+    json.add_adapter(uuid.UUID, lambda val, request: str(val))
 
 
 def get_json_renderer(config):
