@@ -34,41 +34,61 @@ class RestDelegate(object):  #, metaclass=RestDelegateMeta):
     def get_entity(self):
         return self.entity
 
-    def get_obj_list(self, **extra_getter_args):
-        """
-        :param extra_getter_args: additional args for self.entity_list_getter
-        :return:
-        """
-        request = self.views.request
+    def get_query_params_for_coll(self):
+        request_params = self.views.request.params
+        query_params = {}
 
-        # TODO calculates args from request and calls getter in the same method - difficult to override
+        # start
+
         try:
-            start = int(request.params['s'])
+            query_params['start'] = int(request_params['s'])
         except (KeyError, ValueError):
-            start = 0
+            pass
+
+        # limit
+
         try:
-            limit = int(request.params['l'])
+            query_params['limit'] = int(request_params['l'])
         except (KeyError, ValueError):
-            limit = None
-    
-        order_s = request.params.get('o', None)
-        if order_s:
-            order = {'col': order_s.lstrip('-'),'dir': 'desc' if order_s.startswith('-') else 'asc'}
-        else:
-            order = None
-    
-        search = request.params.get('q', None)
-    
+            pass
+
+        # order
+
+        order = request_params.get('o', None)
+        if order:
+            query_params['order'] = {
+                'col': order.lstrip('-'),
+                'dir': 'desc' if order.startswith('-') else 'asc'
+            }
+
+        # search
+
+        search = request_params.get('q', '').strip()
+        if search:
+            query_params['search'] = search
+
+        # filters: fe_foo=1
+
         filters = dict()
-        for param, val in request.params.items():
+        for param, val in request_params.items():
             if param.startswith('f'):
                 filters[param[1:]] = val
 
+        if filters:
+            query_params['filters'] = filters
+
+        # TODO pass remaining params?
+
+        return query_params
+
+    def get_obj_list(self):
+        """
+        :return: (total_count, list_of_objects)
+        """
+        query_params = self.get_query_params_for_coll()
+
         # returns (count, objs)
-        return getattr(self.get_entity(), self.entity_list_getter)(
-            start=start, limit=limit, order=order, search=search,
-            filters=filters or None, **extra_getter_args
-        )
+        return getattr(self.get_entity(), self.entity_list_getter)(query_params)
 
     def get_id_from_request(self):
         return self.views.request.matchdict['id']
@@ -86,9 +106,6 @@ class RestDelegate(object):  #, metaclass=RestDelegateMeta):
 
     def get_fields_for_coll(self):
         return {'*': True}
-
-    def get_query_for_coll(self):  # TODO query logic into get_list_for_rest
-        return ['*']
 
     def is_obj_allowed(self, obj):  # TODO query logic into get_by_id
         return ['*']

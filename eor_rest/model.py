@@ -26,7 +26,15 @@ class RestMixin(object):
         return config.sqlalchemy_session().query(cls).count()
 
     @classmethod
-    def rest_get_list(cls, start=0, limit=None, order=None, search=None, filters=None, query=None):
+    def _rest_get_inner_query(cls, session, query_params):
+        return session().query(cls)
+
+    @classmethod
+    def _rest_get_joined_query(cls, filtered_query, query_params):
+        return filtered_query
+
+    @classmethod
+    def rest_get_list(cls, query_params):
         """
         cls._rest_search_columns = [cls.name, cls.description] - list of columns for search filtering
         :param start: number (default 0)
@@ -38,14 +46,36 @@ class RestMixin(object):
         :return: result of an executed query
         """
 
+        def apply_search(query):
+            search_columns = getattr(cls, '_rest_search_columns', None)
+            if not search_columns or not 'search' in query_params:
+                return query
+
+            search = query_params['search'].lower()
+
+            if len(search_columns) == 1:
+                col = search_columns[0]
+                search_filter = func.lower(col).like('%' + search + '%')
+            else:  # > 1
+                clauses = [func.lower(col).like('%' + search + '%') for col in search_columns]
+                search_filter = or_(*clauses)
+
+            return query.filter(search_filter)
+
         def apply_filters(query):
+            if 'filters' not in query_params:
+                return query
+
+            filters = query_params['filters']
+
             for key, val in filters.items():
                 op, field_name = key.split('_', 1)
 
                 try:
                     field = getattr(cls, field_name)
                 except AttributeError:
-                    log.error('get_for_rest_grid: filter "%s=%s": unknown attribute %s' % (key, val, field_name))
+                    log.warn('RestMixin.rest_get_list(): filter "%s=%s": unknown attribute %s',
+                             key, val, field_name)
                     continue
 
                 if op == 'e':
@@ -62,9 +92,13 @@ class RestMixin(object):
             return query
 
         def apply_order(query):
+            if 'order' not in query_params:
+                return query
+
             from sqlalchemy.orm.relationships import RelationshipProperty
             from sqlalchemy.orm.properties import  ColumnProperty
 
+            order = query_params['order']
             order_split = order['col'].split('.')
 
             try:
@@ -92,34 +126,22 @@ class RestMixin(object):
 
             return query.order_by(desc(order_attr) if order['dir'] == 'desc' else order_attr)
 
-        if not query:
-            query = config.sqlalchemy_session().query(cls)
-
-        search_columns = getattr(cls, '_rest_search_columns', [])
-        if search and len(search_columns) > 0 and search.strip():
-            search = search.strip().lower()
-            if len(search_columns) == 1:
-                col = search_columns[0]
-                search_filter = func.lower(col).like('%' + search + '%')
-            else:  # > 1
-                clauses = [func.lower(col).like('%' + search + '%') for col in search_columns]
-                search_filter = or_(*clauses)
-            query = query.filter(search_filter)
-
-        if filters:
-            query = apply_filters(query)
-
-        if order:
-            query = apply_order(query)
-
-        # TODO linked tables!
         # select * from (select * from users limit 10 offset 10) as u left join files f on u.id = f.user_id
         # http://docs.sqlalchemy.org/en/rel_1_0/orm/tutorial.html#using-subqueries
 
-        count = query.count()
-        result = query[start:start+limit] if limit else query[start:]
+        q_filtered = cls._rest_get_inner_query(config.sqlalchemy_session, query_params)
+        q_filtered = apply_search(q_filtered)
+        q_filtered = apply_filters(q_filtered)
+        q_filtered = apply_order(q_filtered)
 
-        return count, result
+        q_limited = q_filtered.limit(query_params.get('limit', 25))  # TODO 25
+        if 'start' in query_params:
+            q_limited = q_limited.offset(query_params['start'])
+
+        q_joined = cls._rest_get_joined_query(q_limited, query_params)  # .from_self()
+        # TODO q_joined = apply_order_2(q_joined)
+
+        return q_filtered.count(), q_joined.all()
 
     def rest_add(self, flush=False):
         config.sqlalchemy_session().add(self)
