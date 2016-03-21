@@ -1,5 +1,8 @@
 # coding; utf-8
 
+import logging
+log = logging.getLogger(__name__)
+
 import sqlalchemy
 from sqlalchemy.sql import and_, or_, desc
 from sqlalchemy.sql.expression import func
