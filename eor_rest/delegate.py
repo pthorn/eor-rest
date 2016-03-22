@@ -100,15 +100,20 @@ class RestDelegate(object):  #, metaclass=RestDelegateMeta):
         obj_id = self.get_id_from_request()
 
         try:
-            return getattr(self.get_entity(), self.entity_getter)(obj_id)
+            obj = getattr(self.get_entity(), self.entity_getter)(obj_id)
         except NoResultFound:
             raise RESTException(code='object-not-found')
+
+        if not self.is_obj_allowed(obj):
+            raise RESTException(code='forbidden')
+
+        return obj
 
     def get_fields_for_coll(self):
         return {'*': True}
 
-    def is_obj_allowed(self, obj):  # TODO query logic into get_by_id
-        return ['*']
+    def is_obj_allowed(self, obj):
+        return True
 
     def get_fields_for_obj(self):
         return {'*': True}
