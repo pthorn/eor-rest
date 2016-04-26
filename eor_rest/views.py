@@ -176,6 +176,8 @@ class RestViews(object):
 
         update_entity_from_appstruct(obj, deserialized)
 
+        self.delegate.after_populated(obj, deserialized)
+
         obj.rest_add(flush=True)
 
         self.delegate.after_create(obj, deserialized)
@@ -207,6 +209,8 @@ class RestViews(object):
         self.delegate.before_update(obj, deserialized)
 
         update_entity_from_appstruct(obj, deserialized)
+
+        self.delegate.after_populated(obj, deserialized)
 
         obj.rest_add(flush=True)
 

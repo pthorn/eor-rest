@@ -158,6 +158,9 @@ class RestDelegate(object):  #, metaclass=RestDelegateMeta):
         """
         pass
 
+    def after_populated(self, obj, deserialized):
+        pass
+
     def after_create(self, obj, deserialized):
         pass
 
