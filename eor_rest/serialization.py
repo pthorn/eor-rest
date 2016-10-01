@@ -140,22 +140,19 @@ def update_one_to_many(containing_obj, key, appstruct):
     setattr(containing_obj, key, objs_to_keep)
 
 
-
-
 def update_many_to_many(containing_obj, key, appstruct):
     """
-
     :param containing_obj:
     :param key:
     :param appstruct: list of IDs, like [1, 2, 3]
     :return:
     """
-
-    #collection = getattr(containing_obj, key)
-
-    mapper = sqlalchemy.inspect(containing_obj.__class__)
-    prop = getattr(mapper.attrs, key)
+    entity = containing_obj.__class__
+    mapper = sqlalchemy.inspect(entity)
+    prop = getattr(mapper.attrs, key)  # RelationshipProperty
     target_entity = prop.mapper.class_
+
+
 
     objs_to_keep = target_entity.rest_get_by_ids(appstruct)
     setattr(containing_obj, key, objs_to_keep)

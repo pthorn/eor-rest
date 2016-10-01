@@ -19,7 +19,9 @@ class RestMixin(object):
             .one())
 
     @classmethod
-    def rest_get_by_ids(cls, ids):
+    def rest_get_by_ids(cls, appstruct):
+        ids = [el['id'] for el in appstruct]
+
         return (config.sqlalchemy_session().query(cls)
             .filter(cls.id.in_(ids))
             .all())
