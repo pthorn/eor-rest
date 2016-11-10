@@ -139,7 +139,11 @@ class RestMixin(object):
         q_filtered = apply_filters(q_filtered)
         q_filtered = apply_order(q_filtered)
 
-        q_limited = q_filtered.limit(query_params.get('limit', 25))  # TODO 25
+        q_limited = q_filtered
+
+        if 'limit' in query_params:
+            q_limited = q_limited.limit(query_params['limit'])
+
         if 'start' in query_params:
             q_limited = q_limited.offset(query_params['start'])
 
