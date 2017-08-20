@@ -43,6 +43,12 @@ def serialize_sqlalchemy_obj(obj, field_spec):
     if obj is None:
         return None
 
+    # in case of Session().query(entity, extra columns)
+    try:
+        obj = obj[0]
+    except:
+        pass
+
     obj_name = obj.__class__.__name__
     mapper = sqlalchemy.inspect(obj.__class__)
 
