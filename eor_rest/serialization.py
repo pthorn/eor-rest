@@ -132,7 +132,7 @@ def update_one_to_many(containing_obj, key, appstruct):
 
     # update existing objects
     for obj in objs_to_keep:
-        update_entity_from_appstruct(obj, appstructs_by_id[getattr(obj, target_id_attr)])
+        update_entity(obj, appstructs_by_id[getattr(obj, target_id_attr)])
 
     # create new objects
     for el in appstruct:
@@ -140,7 +140,7 @@ def update_one_to_many(containing_obj, key, appstruct):
             continue
 
         new_obj = target_entity()
-        update_entity_from_appstruct(new_obj, el)
+        update_entity(new_obj, el)
         objs_to_keep.append(new_obj)
 
     setattr(containing_obj, key, objs_to_keep)
