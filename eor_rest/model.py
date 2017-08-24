@@ -27,10 +27,6 @@ class RestMixin(object):
             .all())
 
     @classmethod
-    def rest_get_count(cls):
-        return config.sqlalchemy_session().query(cls).count()
-
-    @classmethod
     def _rest_get_inner_query(cls, session, query_params):
         return session().query(cls)
 
