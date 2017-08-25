@@ -127,7 +127,7 @@ def update_one_to_many(containing_obj, key, appstruct):
 
     appstructs_by_id = {el[target_id_attr]: el for el in appstruct if target_id_attr in el}
 
-    objs_to_keep = target_entity.rest_get_related(appstructs_by_id.keys(), containing_obj)
+    objs_to_keep = target_entity.rest_get_related(appstructs_by_id.keys(), containing_obj, key)
     objs_to_keep_by_id = {getattr(obj, target_id_attr): obj for obj in objs_to_keep}
 
     # update existing objects
