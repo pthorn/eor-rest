@@ -12,7 +12,7 @@ requires = [
 
 setup(
     name='eye-of-ra-rest',
-    version='1.0.0',
+    version='1.1.0',
     description='A REST backend for the Pyramid framework',
     long_description='',
     classifiers=[
