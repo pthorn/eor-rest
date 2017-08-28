@@ -5,9 +5,9 @@ from setuptools import setup, find_packages
 here = os.path.abspath(os.path.dirname(__file__))
 
 requires = [
-    'pyramid >= 1.5.1',
-    'SQLAlchemy >= 1.0.4',
-    'voluptuous >= 0.8.7',
+    'pyramid >= 1.8.4',
+    'SQLAlchemy >= 1.1.11',
+    'voluptuous >= 0.10.5',
 ]
 
 setup(
