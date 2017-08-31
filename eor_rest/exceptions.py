@@ -1,5 +1,7 @@
 # coding: utf-8
 
+from sqlalchemy.exc import SQLAlchemyError, DBAPIError
+
 
 class RESTException(Exception):
 
@@ -10,7 +12,27 @@ class RESTException(Exception):
         self.exc = exc
 
     def response(self):
+        """
+        return a JSON response with error information
+        """
+
         resp = {'status': self.status}
+
+        # TODO only if allowed
+        if isinstance(self.exc, Exception):
+            resp['exception'] = {
+                'name': self.exc.__class__.__name__,
+                'message': str(self.exc)
+            }
+
+        if isinstance(self.exc, DBAPIError):
+            resp['exception']['statement'] = self.exc.statement
+            resp['exception']['params'] = self.exc.params
+            resp['exception']['orig'] = {
+                'name': self.exc.__class__.__name__,
+                'message': str(self.exc.orig)
+            }
+
         if self.code:
             resp['code'] = self.code
         if self.msg:

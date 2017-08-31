@@ -63,7 +63,7 @@ class RestViews(object):
                     try:
                         return delegate.permission[method]
                     except KeyError:
-                        return delegate.permission.get('*', None)
+                        return delegate.permission.get('*', None)  # TODO no perm in dict -> do not allow access?
                 else:
                     return delegate.permission
 
@@ -98,34 +98,26 @@ class RestViews(object):
                             permission=permission('delete'))
             config.add_view(cls, attr='bad_method',  route_name=route_name('badmethod2'), renderer='eor-rest-json')
 
-            # custom methods TODO
-
-            # for custom_method in delegate:
-            #   config.add_route(
-            #         '%s-%s-custom' % (cls.name, delegate.name),     # eor-rest-user
-            #        R'%s/%s/{id}/{method}' % (url_prefix, delegate.name),  # /rest/user
-            #       **kwargs
-            #    )
-            #
-            #   config.add_view(....)
-
     def __init__(self, request):
         self.request = request
         self.json = None  # for delegate
         self.obj = None   # for delegate
 
+        # parse route name: eor.rest.default.user.get
+
         if not request.matched_route.name.startswith('eor.rest'):
             log.error('RestViews: bad route name: %r', route_name)
             raise HTTPNotFound()
 
-        route_name = request.matched_route.name.split('.')  # eor.rest.default.user.get
+        route_name = request.matched_route.name.split('.')
         group = route_name[2]
         entity_name = route_name[3]
 
         try:
             self.delegate = self.delegates[group][entity_name](self)
         except KeyError:
-            log.error('RestViews: group %r / entity %r not registered', group, entity_name)
+            log.error('RestViews: group %r / entity %r not registered but route exists',
+                group, entity_name)
             raise HTTPNotFound()
 
     def get_list(self):
@@ -134,136 +126,135 @@ class RestViews(object):
         parameters:
         """
 
-        return self.delegate.get_list_handler()
+        try:
+            return self.delegate.get_list_handler()
+        except SQLAlchemyError as e:
+            raise RESTException(code='database-error', exc=e)
 
     def get_by_id(self):
         """
         GET /prefix/{entity}/{id}
         """
-        obj = self.delegate.get_obj_by_id()
 
-        return {
-            'status': 'ok',
-            'data': self.delegate.serialize_obj(obj)
-        }
+        try:
+            obj = self.delegate.get_obj_by_id()
+
+            return {
+                'status': 'ok',
+                'data': self.delegate.serialize_obj(obj)
+            }
+        except NoResultFound:
+            raise RESTException(code='object-not-found')
+        except SQLAlchemyError as e:
+            raise RESTException(code='database-error', exc=e)
 
     def create(self):
         """
         POST /prefix/{entity}
         """
 
-        # TODO check origin?
-        check_csrf_token(self.request)  # TODO proper response
+        try:
+            # TODO check origin?
+            #check_csrf_token(self.request)  # TODO proper response
 
-        # parse request body
+            # parse request body
 
-        json = self.json = self.delegate.parse_request_body()
+            json = self.json = self.delegate.parse_request_body()
 
-        # check existing
+            # check existing
+            # TODO no ID in request; some objects may have ID in request data, need get_id_from_deserialized()
 
+            #try:
+            #    self.delegate.get_obj_by_id()
+            #    return self._error_response(code='object-already-exists')
+            #except NoResultFound:
+            #    pass
 
-        # create object
+            # create object
 
-        obj = self.obj = self.delegate.create_obj()
+            obj = self.obj = self.delegate.create_obj()
 
-        # deserialize
+            # deserialize
 
-        deserialized = self.delegate.deserialize(json)
+            deserialized = self.delegate.deserialize(json)
 
-        # update object
+            # update object
 
-        self.delegate.before_create(obj, deserialized)
+            self.delegate.before_create(obj, deserialized)
 
-        update_entity_from_appstruct(obj, deserialized)
+            update_entity_from_appstruct(obj, deserialized)
 
-        self.delegate.after_populated(obj, deserialized)
+            self.delegate.after_populated(obj, deserialized)
 
-        obj.rest_add(flush=True)
+            obj.rest_add(flush=True)
 
-        self.delegate.after_create(obj, deserialized)
+            self.delegate.after_create(obj, deserialized)
 
-        return self.delegate.create_response(obj)
+            return self.delegate.create_response(obj)
+        except SQLAlchemyError as e:
+            raise RESTException(code='database-error', exc=e)
 
     def update(self):
         """
         POST /prefix/{entity}/{id}
         """
 
-        # TODO check origin?
-        check_csrf_token(self.request)  # TODO proper response
+        try:
+            # TODO check origin?
+            #check_csrf_token(self.request)  # TODO proper response
 
-        # parse request body
+            # parse request body
 
-        json = self.json = self.delegate.parse_request_body()
+            json = self.json = self.delegate.parse_request_body()
 
-        # get object by id
+            # get object by id
 
-        obj = self.obj = self.delegate.get_obj_by_id()
+            obj = self.obj = self.delegate.get_obj_by_id()
 
-        # deserialize
+            # deserialize
 
-        deserialized = self.delegate.deserialize(json)
+            deserialized = self.delegate.deserialize(json)
 
-        # update object
+            # update object
 
-        self.delegate.before_update(obj, deserialized)
+            self.delegate.before_update(obj, deserialized)
 
-        update_entity_from_appstruct(obj, deserialized)
+            update_entity_from_appstruct(obj, deserialized)
 
-        self.delegate.after_populated(obj, deserialized)
+            self.delegate.after_populated(obj, deserialized)
 
-        obj.rest_add(flush=True)
+            obj.rest_add(flush=True)
 
-        self.delegate.after_update(obj, deserialized)
+            self.delegate.after_update(obj, deserialized)
 
-        return self.delegate.update_response(obj)
+            return self.delegate.update_response(obj)
+        except SQLAlchemyError as e:
+            raise RESTException(code='database-error', exc=e)
 
     def delete(self):
         """
         DELETE /prefix/{entity}/{id}
         """
 
-        # TODO check origin?
-        check_csrf_token(self.request)  # TODO proper response
+        try:
+            # TODO check origin?
+            #check_csrf_token(self.request)  # TODO proper response
 
-        obj = self.obj = self.delegate.get_obj_by_id()
+            obj = self.obj = self.delegate.get_obj_by_id()
 
-        self.delegate.before_delete(obj)
+            self.delegate.before_delete(obj)
 
-        self.delegate.delete_obj(obj)
+            self.delegate.delete_obj(obj)
 
-        self.delegate.after_delete()
+            self.delegate.after_delete()
 
-        return self.delegate.delete_response(obj)
-
-    def custom_view_handler(self):
-        """
-        POST /prefix/{entity}/{id}/{method}
-        """
-
-        # TODO check_csrf_token(self.request)
-
-        pass
+            return self.delegate.delete_response(obj)
+        except SQLAlchemyError as e:
+            raise RESTException(code='database-error', exc=e)
 
     def bad_method(self):
         #log.warn(TODO)
         raise HTTPMethodNotAllowed()
-
-    @classmethod
-    def _error_response(cls, status=None, code=None, message=None):
-        """
-        return a JSON response with error information
-        """
-
-        resp = {'status': status or 'error'}
-
-        if code:
-            resp['code'] = code
-
-        if message:
-            resp['message'] = message
-
-        return resp
 
     # TODO
     @classmethod

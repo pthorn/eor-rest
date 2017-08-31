@@ -3,8 +3,6 @@
 import logging
 log = logging.getLogger(__name__)
 
-from sqlalchemy.orm.exc import NoResultFound
-
 from voluptuous import Schema, Required, All, MultipleInvalid, Invalid
 
 from .exceptions import *
@@ -12,6 +10,10 @@ from .serialization import serialize_sqlalchemy_obj, serialize_sqlalchemy_list
 
 
 class RestDelegate(object):  #, metaclass=RestDelegateMeta):
+    """
+    permission: None, string, dict {, '*': string};
+      dict keys: get, getbyid, create, update, delete
+    """
 
     name = None  # 'entity' -> /rest/entities, /rest/entity/{id} etc.
     entity = None # models.Entity
@@ -99,11 +101,9 @@ class RestDelegate(object):  #, metaclass=RestDelegateMeta):
     def get_obj_by_id(self):
         obj_id = self.get_id_from_request()
 
-        try:
-            obj = getattr(self.get_entity(), self.entity_getter)(obj_id)
-        except NoResultFound:
-            raise RESTException(code='object-not-found')
+        obj = getattr(self.get_entity(), self.entity_getter)(obj_id)
 
+        # TODO security
         if not self.is_obj_allowed(obj):
             raise RESTException(code='forbidden')
 
