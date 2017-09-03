@@ -11,7 +11,7 @@ from pyramid.httpexceptions import HTTPNotFound, HTTPMethodNotAllowed
 from pyramid.session import check_csrf_token
 
 from .exceptions import *
-from .serialization import update_entity_from_appstruct
+from .deserialize import update_entity_from_appstruct
 
 
 class RestViews(object):

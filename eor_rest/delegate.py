@@ -6,7 +6,7 @@ log = logging.getLogger(__name__)
 from voluptuous import Schema, Required, All, MultipleInvalid, Invalid
 
 from .exceptions import *
-from .serialization import serialize_sqlalchemy_obj, serialize_sqlalchemy_list
+from .serialize import serialize_sqlalchemy_obj, serialize_sqlalchemy_list
 
 
 class RestDelegate(object):  #, metaclass=RestDelegateMeta):
