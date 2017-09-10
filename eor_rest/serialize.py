@@ -20,7 +20,7 @@ def _serialize_value(val, func=None, obj=None):
     if func:
         val = func(val, obj)
 
-    if _is_sequence(val):
+    if _is_sequence(val) and not isinstance(val, dict):
         return list(val)
 
     return val
