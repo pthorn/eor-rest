@@ -16,105 +16,27 @@ from .deserialize import update_entity_from_appstruct
 
 class RestViews(object):
 
-    delegates = dict()
-
-    @classmethod
-    def register(cls, group='default'):
-        """
-        @RestViews.register('site') class User(RestDelegate): pass
-        """
-        def decorate(delegate):
-            if delegate.name is None:
-                delegate.name = delegate.__name__.lower()
-
-            if delegate.entity is None:
-                raise ValueError('RestViews.register(): %r must have attribute "entity"' % delegate)
-
-            if delegate.name in cls.delegates:
-                raise ValueError('RestViews.register(): %r: name %r already registered for class %r' % (
-                    delegate, delegate.name, cls.delegates[delegate.name]))
-
-            if group not in cls.delegates:
-                cls.delegates[group] = dict()
-
-            cls.delegates[group][delegate.name] = delegate
-
-            return delegate
-
-        return decorate
-
-    @classmethod
-    def configure(cls, config, group='default', url_prefix='/rest', **kwargs):
-        """
-        RestViews.configure(config, group='site', url_prefix='/rest', factory=ebff('admin-panel'))
-        """
-        if group not in cls.delegates:
-            if group == 'default':
-                return
-            else:
-                raise RuntimeError('group %r does not exist' % group)
-
-        for delegate_name, delegate in cls.delegates[group].items():
-            # example: eor.rest.default.user.get
-            route_name = lambda suffix: 'eor.rest.%s.%s.%s' % (group, delegate_name, suffix)
-
-            def permission(method):
-                if isinstance(delegate.permission, dict):
-                    try:
-                        return delegate.permission[method]
-                    except KeyError:
-                        return delegate.permission.get('*', None)  # TODO no perm in dict -> do not allow access?
-                else:
-                    return delegate.permission
-
-            # collection resource
-
-            url_pattern = R'%s/%s' % (url_prefix, delegate_name)  # example: /rest/user
-
-            config.add_route(route_name('get'),       url_pattern, request_method='GET',  **kwargs)
-            config.add_route(route_name('create'),    url_pattern, request_method='POST', **kwargs)
-            config.add_route(route_name('badmethod'), url_pattern, **kwargs)
-
-            config.add_view(cls, attr='get_list', route_name=route_name('get'), renderer='eor-rest-json',
-                            permission=permission('get'))
-            config.add_view(cls, attr='create',  route_name=route_name('create'), renderer='eor-rest-json',
-                            permission=permission('create'))
-            config.add_view(cls, attr='bad_method',  route_name=route_name('badmethod'), renderer='eor-rest-json')
-
-            # item resource
-
-            url_pattern = R'%s/%s/{id}' % (url_prefix, delegate_name)  # example: /rest/user/{id}
-
-            config.add_route(route_name('getbyid'),    url_pattern, request_method='GET',    **kwargs)
-            config.add_route(route_name('update'),     url_pattern, request_method='PUT',    **kwargs)
-            config.add_route(route_name('delete'),     url_pattern, request_method='DELETE', **kwargs)
-            config.add_route(route_name('badmethod2'), url_pattern, **kwargs)
-
-            config.add_view(cls, attr='get_by_id', route_name=route_name('getbyid'), renderer='eor-rest-json',
-                            permission=permission('getbyid'))
-            config.add_view(cls, attr='update',  route_name=route_name('update'), renderer='eor-rest-json',
-                            permission=permission('update'))
-            config.add_view(cls, attr='delete',  route_name=route_name('delete'), renderer='eor-rest-json',
-                            permission=permission('delete'))
-            config.add_view(cls, attr='bad_method',  route_name=route_name('badmethod2'), renderer='eor-rest-json')
+    apis = dict()
 
     def __init__(self, request):
         self.request = request
         self.json = None  # for delegate
         self.obj = None   # for delegate
 
-        # parse route name: eor.rest.default.user.get
+        # parse route name: eor-rest.default.user.get
 
-        if not request.matched_route.name.startswith('eor.rest'):
+        route_name = request.matched_route.name
+        route_split = request.matched_route.name.split('.')
+
+        if not route_name.startswith('eor-rest'):
             log.error('RestViews: bad route name: %r', route_name)
             raise HTTPNotFound()
 
-        route_name = request.matched_route.name.split('.')
-        group = route_name[2]
-        entity_name = route_name[3]
+        api = route_split[1]
+        delegate = route_split[2]
 
         try:
-            self.delegate = self.delegates[group][entity_name](self)
+            self.delegate = self.apis[api].delegates[delegate](self)
         except KeyError:
             log.error('RestViews: group %r / entity %r not registered but route exists',
                 group, entity_name)

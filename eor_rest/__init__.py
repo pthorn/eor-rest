@@ -2,7 +2,7 @@
 
 from . import config as config_module
 from .delegate import RestDelegate
-from .views import RestViews
+from .routes import RestAPI
 from .model import RestMixin
 from .exceptions import RESTException, ValidationException
 
