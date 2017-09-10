@@ -13,12 +13,12 @@ def _is_sequence(arg):
     return not hasattr(arg, "strip") and (hasattr(arg, "__getitem__") or hasattr(arg, "__iter__"))
 
 
-def _serialize_value(val, func=None, obj=None):
+def _serialize_value(val, func=None, obj=None, extras=None):
     """
     serializes associaltion proxies to simple lists
     """
     if func:
-        val = func(val, obj)
+        val = func(val, obj, *extras)
 
     if _is_sequence(val) and not isinstance(val, dict):
         return list(val)
@@ -39,8 +39,10 @@ def serialize_sqlalchemy_obj(obj, field_spec):
         return None
 
     # in case of Session().query(entity, extra columns)
+    extras = None
     try:
         obj = obj[0]
+        extras = obj[1:]
     except:
         pass
 
@@ -91,7 +93,7 @@ def serialize_sqlalchemy_obj(obj, field_spec):
             else:
                 res[key] = serialize_sqlalchemy_obj(obj_attr, control)
         elif callable(control):
-            res[key] = _serialize_value(obj_attr, control, obj)
+            res[key] = _serialize_value(obj_attr, func=control, obj=obj, extras=extras)
         elif control == True:
             res[key] = _serialize_value(obj_attr)
         else:
