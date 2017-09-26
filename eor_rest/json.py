@@ -8,8 +8,19 @@ from pyramid.renderers import JSON
 
 
 def configure_renderer(json):
+    # from dateutil.tz import tzoffset
+    # utc = tzoffset(None, 0)
+    utc = datetime.timezone.utc  # datetime.timezone(datetime.timedelta(0))
+
     def datetime_adapter(obj, request):
-        return obj.isoformat()
+        try:
+            utc_dt = obj.astimezone(utc)
+        except ValueError:
+            raise NotImplementedError()
+
+        return (utc_dt
+            .isoformat()
+            .replace('+00:00', 'Z'))
 
     json.add_adapter(datetime.date, datetime_adapter)
     json.add_adapter(datetime.datetime, datetime_adapter)
