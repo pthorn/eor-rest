@@ -18,7 +18,7 @@ def _serialize_value(val, func=None, obj=None, extras=None):
     serializes associaltion proxies to simple lists
     """
     if func:
-        val = func(val, obj, *extras)
+        val = func(val, obj, *(extras or []))
 
     if _is_sequence(val) and not isinstance(val, dict):
         return list(val)
