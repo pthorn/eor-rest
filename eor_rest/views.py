@@ -26,7 +26,7 @@ class RestViews(object):
         # parse route name: eor-rest.default.user.get
 
         route_name = request.matched_route.name
-        route_split = request.matched_route.name.split('.')
+        route_split = request.matched_route.name.split('.', 4)
 
         if not route_name.startswith('eor-rest'):
             log.error('RestViews: bad route name: %r', route_name)
@@ -171,6 +171,22 @@ class RestViews(object):
             self.delegate.after_delete()
 
             return self.delegate.delete_response(obj)
+        except SQLAlchemyError as e:
+            raise RESTException(code='database-error', exc=e)
+
+    def custom_method(self):
+        method = self.request.matched_route.name.split('.', 4)[3]
+        method = method[len('custom-'):]
+        d = self.delegate.custom_methods[method]
+
+        try:
+            if d['item']:
+                obj = self.obj = self.delegate.get_obj_by_id()
+                return getattr(self.delegate, method)(obj)
+            else:
+                return getattr(self.delegate, method)()
+        except NoResultFound:
+            raise RESTException(code='object-not-found')
         except SQLAlchemyError as e:
             raise RESTException(code='database-error', exc=e)
 

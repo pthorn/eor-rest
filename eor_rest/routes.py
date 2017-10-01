@@ -33,13 +33,35 @@ class RestAPI(object):
 
             self.delegates[delegate.name] = delegate
 
+            delegate.custom_methods = {}
+            for attr, method in delegate.__dict__.items():
+                if hasattr(method, '_eor_custom'):
+                    delegate.custom_methods[attr] = method._eor_custom
+
             return delegate
 
         return decorate
 
-    def custom(self):  # decorator for a custom view
+    def custom_coll(self, http_method, suffix=None):  # decorator for a custom view
         def decorate(method):
-            pass
+            method._eor_custom = {
+                'item': False,
+                'url_suffix': suffix or method.__name__,
+                'http_method': http_method
+            }
+            return method
+
+        return decorate
+
+    def custom_item(self, http_method, suffix=None):
+        def decorate(method):
+            method._eor_custom = {
+                'item': True,
+                'url_suffix': suffix or method.__name__,
+                'http_method': http_method
+            }
+            return method
+
         return decorate
 
     def add_routes(self, config, url_prefix='/rest', **kwargs):
@@ -83,6 +105,20 @@ class RestAPI(object):
                 permission=permission(method)
             )
 
+        def register_custom_method(attr, http_method, url_suffix, is_item):
+            config.add_route(
+                route_name('custom-' + attr),
+                url_pattern(is_item) + '/' + url_suffix,
+                request_method=http_method,
+                **kwargs
+            )
+            config.add_view(
+                RestViews, attr='custom_method',
+                route_name=route_name('custom-' + attr),
+                renderer='eor-rest-json',
+                permission=None # TODO permission(method)
+            )
+
         # collection resource
 
         register(False, 'get-list', 'GET',  'get_list')
@@ -97,3 +133,6 @@ class RestAPI(object):
         register(True, 'bad-method-item', None, 'bad_method')
 
         # custom methods
+
+        for attr, d in delegate.custom_methods.items():
+            register_custom_method(attr, d['http_method'], d['url_suffix'], d['item'])
