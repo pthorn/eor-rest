@@ -25,10 +25,10 @@ class RestAPI(object):
                 delegate.name = delegate.__name__.lower()
 
             if delegate.entity is None:
-                raise ValueError('RestViews.register(): %r must have attribute "entity"' % delegate)
+                raise ValueError('RestAPI.endpoint(): %r must have attribute "entity"' % delegate)
 
             if delegate.name in self.delegates:
-                raise ValueError('RestViews.register(): %r: name %r already registered for class %r' % (
+                raise ValueError('RestAPI.endpoint(): %r: name %r already registered for class %r' % (
                     delegate, delegate.name, cls.delegates[delegate.name]))
 
             self.delegates[delegate.name] = delegate
