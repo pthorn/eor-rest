@@ -4,19 +4,20 @@ import datetime
 import decimal
 import uuid
 
+import tzlocal
+
 from pyramid.renderers import JSON
 
 
 def configure_renderer(json):
-    # from dateutil.tz import tzoffset
-    # utc = tzoffset(None, 0)
-    utc = datetime.timezone.utc  # datetime.timezone(datetime.timedelta(0))
+    utc = datetime.timezone.utc
+    local = tzlocal.get_localzone()
 
     def datetime_adapter(obj, request):
         try:
             utc_dt = obj.astimezone(utc)
         except ValueError:
-            raise NotImplementedError()
+            utc_dt = local.localize(obj).astimezone(utc)
 
         return (utc_dt
             .isoformat()

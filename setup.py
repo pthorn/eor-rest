@@ -8,6 +8,7 @@ requires = [
     'pyramid >= 1.8.4',
     'SQLAlchemy >= 1.1.11',
     'voluptuous >= 0.10.5',
+    'tzlocal >= 1.4'
 ]
 
 setup(
