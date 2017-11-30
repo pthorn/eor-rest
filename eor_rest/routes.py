@@ -1,5 +1,8 @@
 from .views import RestViews
 
+import logging
+log = logging.getLogger(__name__)
+
 
 class RestAPI(object):
 
@@ -21,11 +24,11 @@ class RestAPI(object):
             ...
         """
         def decorate(delegate):
-            if delegate.name is None:
-                delegate.name = delegate.__name__.lower()
-
             if delegate.entity is None:
                 raise ValueError('RestAPI.endpoint(): %r must have attribute "entity"' % delegate)
+
+            if delegate.name is None:
+                delegate.name = delegate.entity.__name__.lower()
 
             if delegate.name in self.delegates:
                 raise ValueError('RestAPI.endpoint(): %r: name %r already registered for class %r' % (
@@ -37,6 +40,9 @@ class RestAPI(object):
             for attr, method in delegate.__dict__.items():
                 if hasattr(method, '_eor_custom'):
                     delegate.custom_methods[attr] = method._eor_custom
+
+            log.debug('RestAPI(%r): registered endpoint: name %r, entity %r',
+                self.name, delegate.name, delegate.entity.__name__)
 
             return delegate
 
