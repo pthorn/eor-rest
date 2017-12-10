@@ -10,6 +10,7 @@ from pyramid.renderers import render_to_response
 from pyramid.httpexceptions import HTTPNotFound, HTTPMethodNotAllowed
 from pyramid.session import check_csrf_token
 
+from .config import config
 from .exceptions import *
 from .deserialize import update_entity_from_appstruct
 
@@ -76,8 +77,7 @@ class RestViews(object):
         """
 
         try:
-            # TODO check origin?
-            #check_csrf_token(self.request)  # TODO proper response
+            self._security_check()
 
             # parse request body
 
@@ -122,8 +122,7 @@ class RestViews(object):
         """
 
         try:
-            # TODO check origin?
-            #check_csrf_token(self.request)  # TODO proper response
+            self._security_check()
 
             # parse request body
 
@@ -159,8 +158,7 @@ class RestViews(object):
         """
 
         try:
-            # TODO check origin?
-            #check_csrf_token(self.request)  # TODO proper response
+            self._security_check()
 
             obj = self.obj = self.delegate.get_obj_by_id()
 
@@ -194,15 +192,10 @@ class RestViews(object):
         #log.warn(TODO)
         raise HTTPMethodNotAllowed()
 
-    # TODO
-    @classmethod
-    def _check_origin(cls):
-        pass
-
-    # TODO
-    @classmethod
-    def _check_csrf(cls):
-        pass
+    def _security_check(self):
+        if config.do_csrf_checks:
+            check_csrf_token(self.request)  # TODO proper response
+        # TODO check origin?
 
 
 def exception_view(context, request):
