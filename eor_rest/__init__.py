@@ -9,7 +9,7 @@ from .exceptions import RESTException, ValidationException
 
 def includeme(config):
     settings = config.get_settings()
-    config_module.config.sqlalchemy_session = settings['eor_rest.sqlalchemy_session']
+    config_module.config._from_settings(settings)
 
     from .json import get_json_renderer
     config.add_renderer('eor-rest-json', get_json_renderer(config))
