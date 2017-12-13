@@ -1,8 +1,11 @@
 # coding: utf-8
 
 
-def _as_bool(str_val):
-    return str_val.lower() in ('true', '1', 'yes')
+def _as_bool(val):
+    if type(val) == type(True):
+        return val
+
+    return val.lower() in ('true', '1', 'yes')
 
 
 class Config(object):
