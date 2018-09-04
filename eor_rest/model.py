@@ -6,6 +6,7 @@ log = logging.getLogger(__name__)
 import sqlalchemy
 from sqlalchemy.sql import and_, or_, desc
 from sqlalchemy.sql.expression import func
+from sqlalchemy.orm.exc import NoResultFound
 
 from .config import config
 
@@ -14,9 +15,12 @@ class RestMixin(object):
 
     @classmethod
     def rest_get_by_id(cls, id):
-        return (config.sqlalchemy_session().query(cls)
-            .filter(cls.id == id)
-            .one())
+        obj = config.sqlalchemy_session().query(cls).get(id)
+
+        if obj is None:
+            raise NoResultFound
+
+        return obj
 
     @classmethod
     def rest_get_by_ids(cls, appstruct):
