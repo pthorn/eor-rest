@@ -7,7 +7,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 requires = [
     'pyramid >= 1.8.4',
     'SQLAlchemy >= 1.1.11',
-    'voluptuous >= 0.10.5',
+    'voluptuous == 0.11.5',
     'tzlocal >= 1.4'
 ]
 
