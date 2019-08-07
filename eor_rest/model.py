@@ -7,6 +7,8 @@ import sqlalchemy
 from sqlalchemy.sql import and_, or_, desc
 from sqlalchemy.sql.expression import func
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.orm.relationships import RelationshipProperty
+from sqlalchemy.orm.properties import  ColumnProperty
 
 from .config import config
 
@@ -36,7 +38,7 @@ class RestMixin(object):
 
     @classmethod
     def _rest_get_joined_query(cls, filtered_query, query_params):
-        return filtered_query
+        return filtered_query.from_self()
 
     @classmethod
     def rest_get_list(cls, query_params):
@@ -100,9 +102,6 @@ class RestMixin(object):
             if 'order' not in query_params:
                 return query
 
-            from sqlalchemy.orm.relationships import RelationshipProperty
-            from sqlalchemy.orm.properties import  ColumnProperty
-
             order = query_params['order']
             order_split = order['col'].split('.')
 
@@ -137,6 +136,7 @@ class RestMixin(object):
         q_filtered = cls._rest_get_inner_query(config.sqlalchemy_session, query_params)
         q_filtered = apply_search(q_filtered)
         q_filtered = apply_filters(q_filtered)
+        q_count = q_filtered  # count() query should not have ORDER BY
         q_filtered = apply_order(q_filtered)
 
         q_limited = q_filtered
@@ -148,9 +148,10 @@ class RestMixin(object):
             q_limited = q_limited.offset(query_params['start'])
 
         q_joined = cls._rest_get_joined_query(q_limited, query_params)  # .from_self()
+        q_joined = apply_order(q_joined)
         # TODO q_joined = apply_order_2(q_joined)
 
-        return q_filtered.count(), q_joined.all()
+        return q_count.count(), q_joined.all()
 
     def rest_add(self, flush=False):
         config.sqlalchemy_session().add(self)
