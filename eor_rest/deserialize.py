@@ -60,8 +60,6 @@ def update_many_to_many(containing_obj, key, appstruct):
     prop = getattr(mapper.attrs, key)  # RelationshipProperty
     target_entity = prop.mapper.class_
 
-
-
     objs_to_keep = target_entity.rest_get_by_ids(appstruct)
     setattr(containing_obj, key, objs_to_keep)
 
@@ -80,11 +78,37 @@ def update_entity(obj, appstruct):
         prop = mapper.attrs.get(key)  # does not exist for association proxies
 
         if isinstance(prop, ColumnProperty):
-            #print(key, 'PROP:', prop, type(prop), 'ATTR:', obj_attr, type(obj_attr), 'CLASS ATTR:',  getattr(obj.__class__, key), type(getattr(obj.__class__, key)))
+            info = mapper.all_orm_descriptors[key].info
+
+            # print(
+            #     key,
+            #     'PROP:', prop, type(prop),
+            #     'ATTR:', obj_attr, type(obj_attr),
+            #     'CLASS ATTR:',  getattr(obj.__class__, key), type(getattr(obj.__class__, key)),
+            #     'DESCRIPTOR:', mapper.all_orm_descriptors[key],
+            #     'INFO:', info
+            # )
+
+            if 'efs_category' in info and obj_attr != val:
+                log.debug('deleting file id %s', obj_attr)
+                from eor_filestore import delete_by_id
+                delete_by_id(obj_attr)
+
             setattr(obj, key, val)
         elif isinstance(obj_attr, _AssociationCollection):
             # gdt AssociationProxy: getattr(obj.__class__, key)
             log.debug('updating association proxy: %s.%s', obj_name, key)
+
+            if 'efs_category' in info:
+                from eor_filestore import delete_by_id
+
+                new_files = frozenset(val)
+
+                for old_file in obj_attr:
+                    if old_file not in new_files:
+                        log.debug('deleting file id %s', old_file)
+                        delete_by_id(old_file)
+
             setattr(obj, key, val)
         elif isinstance(prop, RelationshipProperty):
             if not prop.uselist:
