@@ -89,7 +89,7 @@ def update_entity(obj, appstruct):
             #     'INFO:', info
             # )
 
-            if 'efs_category' in info and obj_attr != val:
+            if 'efs_category' in info and obj_attr and obj_attr != val:
                 log.debug('deleting file id %s', obj_attr)
                 from eor_filestore import delete_by_id
                 delete_by_id(obj_attr)
@@ -105,7 +105,7 @@ def update_entity(obj, appstruct):
                 new_files = frozenset(val)
 
                 for old_file in obj_attr:
-                    if old_file not in new_files:
+                    if old_file and old_file not in new_files:
                         log.debug('deleting file id %s', old_file)
                         delete_by_id(old_file)
 
