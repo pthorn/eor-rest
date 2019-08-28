@@ -104,8 +104,10 @@ class RestDelegate(object):  #, metaclass=RestDelegateMeta):
 
         obj = getattr(self.get_entity(), self.entity_getter)(obj_id)
 
-        # TODO security
-        if not self.is_obj_allowed(obj):
+        # security check
+        if not self.is_access_allowed_for_obj(obj, self.request.method):
+            log.debug('is_access_allowed_for_obj() is False, method %s, entity %r, id %r',
+                self.request.method, self.name, obj_id)
             raise RESTException(code='forbidden')
 
         return obj
@@ -113,7 +115,7 @@ class RestDelegate(object):  #, metaclass=RestDelegateMeta):
     def get_fields_for_coll(self):
         return {'*': True}
 
-    def is_obj_allowed(self, obj):
+    def is_access_allowed_for_obj(self, obj, method):
         return True
 
     def get_fields_for_obj(self):
