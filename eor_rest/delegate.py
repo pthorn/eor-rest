@@ -38,6 +38,54 @@ class RestDelegate(object):  #, metaclass=RestDelegateMeta):
     def get_entity(self):
         return self.entity
 
+    def get_id_from_request(self):
+        return self.views.request.matchdict['id']
+
+    def get_id_from_obj(self, obj):
+        return obj.id
+
+    def get_obj_by_id(self):
+        obj_id = self.get_id_from_request()
+
+        obj = getattr(self.get_entity(), self.entity_getter)(obj_id)
+
+        # security check
+        if not self.is_access_allowed_for_obj(obj, self.request.method):
+            log.debug('is_access_allowed_for_obj() is False, method %s, entity %r, id %r',
+                self.request.method, self.name, obj_id)
+            raise RESTException(code='forbidden')
+
+        return obj
+
+    def is_access_allowed_for_obj(self, obj, method):
+        return True
+
+    def get_schema(self):
+        return Schema({}, required=True)
+
+    def deserialize(self, serialized):
+        try:
+            return self.get_schema()(serialized)
+        except MultipleInvalid as e:
+            print('\n', str(e), '\n', e.errors, '\n', e.errors[0].path, '\n', e.errors[0].error_message, '\n')
+            from pprint import pprint
+            print('pprint:', pprint(e), '\n')
+            raise ValidationException(e)
+
+    # get list
+
+    def get_list_handler(self):
+        count, lst = self.get_obj_list()
+
+        return {
+            'status': 'ok',
+            'count': count,
+            'data': self.serialize_coll(lst)
+        }
+
+    def get_fields_for_coll(self):
+        return {'*': True}
+
     def get_query_params_for_coll(self):
         request_params = self.views.request.params
         query_params = {}
@@ -94,59 +142,16 @@ class RestDelegate(object):  #, metaclass=RestDelegateMeta):
         # returns (count, objs)
         return getattr(self.get_entity(), self.entity_list_getter)(query_params)
 
-    def get_id_from_request(self):
-        return self.views.request.matchdict['id']
+    def serialize_coll(self, lst):
+        return serialize_sqlalchemy_list(lst, field_spec=self.get_fields_for_coll())
 
-    def get_id_from_obj(self, obj):
-        return obj.id
-
-    def get_obj_by_id(self):
-        obj_id = self.get_id_from_request()
-
-        obj = getattr(self.get_entity(), self.entity_getter)(obj_id)
-
-        # security check
-        if not self.is_access_allowed_for_obj(obj, self.request.method):
-            log.debug('is_access_allowed_for_obj() is False, method %s, entity %r, id %r',
-                self.request.method, self.name, obj_id)
-            raise RESTException(code='forbidden')
-
-        return obj
-
-    def get_fields_for_coll(self):
-        return {'*': True}
-
-    def is_access_allowed_for_obj(self, obj, method):
-        return True
+    # get item
 
     def get_fields_for_obj(self):
         return {'*': True}
 
     def serialize_obj(self, obj):
         return serialize_sqlalchemy_obj(obj, field_spec=self.get_fields_for_obj())
-
-    def serialize_coll(self, lst):
-        return serialize_sqlalchemy_list(lst, field_spec=self.get_fields_for_coll())
-
-    def get_schema(self):
-        return Schema({}, required=True)
-
-    def deserialize(self, serialized):
-        try:
-            return self.get_schema()(serialized)
-        except MultipleInvalid as e:
-            raise ValidationException(e)
-
-    # get list
-
-    def get_list_handler(self):
-        count, lst = self.get_obj_list()
-
-        return {
-            'status': 'ok',
-            'count': count,
-            'data': self.serialize_coll(lst)
-        }
 
     # create
 
