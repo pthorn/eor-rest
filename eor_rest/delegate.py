@@ -7,6 +7,7 @@ from voluptuous import Schema, Required, All, MultipleInvalid, Invalid
 
 from .exceptions import *
 from .serialize import serialize_sqlalchemy_obj, serialize_sqlalchemy_list
+from .deserialize import run_hooks_on_delete
 
 
 class RestDelegate(object):  #, metaclass=RestDelegateMeta):
@@ -194,6 +195,9 @@ class RestDelegate(object):  #, metaclass=RestDelegateMeta):
         Can interrupt delete by raising RESTException
         """
         pass
+
+    def run_delete_hooks(self, obj):
+        run_hooks_on_delete(obj)
 
     def delete_obj(self, obj):
         obj.rest_delete(flush=True)

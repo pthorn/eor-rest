@@ -129,3 +129,17 @@ def update_entity(obj, appstruct):
 def update_entity_from_appstruct(obj, appstruct):
     with config.sqlalchemy_session.no_autoflush:
         update_entity(obj, appstruct)
+
+
+def run_hooks_on_delete(obj):
+    from eor_filestore import delete_by_id
+
+    mapper = sqlalchemy.inspect(obj.__class__)
+
+    for k in mapper.attrs.keys():
+        obj_attr = getattr(obj, k)
+        info = mapper.all_orm_descriptors[k].info
+
+        if 'efs_category' in info and obj_attr:
+            log.debug('deleting file id %s', obj_attr)
+            delete_by_id(obj_attr)

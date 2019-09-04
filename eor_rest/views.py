@@ -164,6 +164,8 @@ class RestViews(object):
 
             self.delegate.before_delete(obj)
 
+            self.delegate.run_delete_hooks(obj)
+
             self.delegate.delete_obj(obj)
 
             self.delegate.after_delete()
