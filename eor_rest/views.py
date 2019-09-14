@@ -49,6 +49,8 @@ class RestViews(object):
         parameters:
         """
 
+        log.info('get list %s, %s', self.delegate.name, self._log_user())
+
         try:
             return self.delegate.get_list_handler()
         except SQLAlchemyError as e:
@@ -58,6 +60,9 @@ class RestViews(object):
         """
         GET /prefix/{entity}/{id}
         """
+
+        log.info('get by id %s id %r, %s', self.delegate.name, self.delegate.get_id_from_request(),
+            self._log_user())
 
         try:
             obj = self.delegate.get_obj_by_id()
@@ -75,6 +80,8 @@ class RestViews(object):
         """
         POST /prefix/{entity}
         """
+
+        log.info('create %s, %r', self.delegate.name, self._log_user())
 
         try:
             self._security_check()
@@ -118,8 +125,11 @@ class RestViews(object):
 
     def update(self):
         """
-        POST /prefix/{entity}/{id}
+        PUT /prefix/{entity}/{id}
         """
+
+        log.info('update %s id %r, %s', self.delegate.name, self.delegate.get_id_from_request(),
+            self._log_user())
 
         try:
             self._security_check()
@@ -157,6 +167,9 @@ class RestViews(object):
         DELETE /prefix/{entity}/{id}
         """
 
+        log.info('delete %s id %r, %s', self.delegate.name, self.delegate.get_id_from_request(),
+            self._log_user())
+
         try:
             self._security_check()
 
@@ -179,6 +192,9 @@ class RestViews(object):
         method = method[len('custom-'):]
         d = self.delegate.custom_methods[method]
 
+        log.info('custom [%s] %s id %r, %s', method, self.delegate.name,
+            self.delegate.get_id_from_request(), self._log_user())
+
         try:
             if d['item']:
                 obj = self.obj = self.delegate.get_obj_by_id()
@@ -199,6 +215,11 @@ class RestViews(object):
             check_csrf_token(self.request)  # TODO proper response
         # TODO check origin?
 
+    def _log_user(self):
+        if self.request.user:
+            return self.request.user
+        else:
+            return '<no user>'
 
 def exception_view(context, request):
     return render_to_response('eor-rest-json', context.response(), request=request)
