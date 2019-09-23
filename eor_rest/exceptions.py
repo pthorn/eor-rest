@@ -56,7 +56,7 @@ class CSRFException(RESTException):
 class RequestParseException(RESTException):
 
     def __init__(self, exc=None):
-        super().__init__(*args, status='bad-json', exc=exc)
+        super().__init__(status='bad-json', exc=exc)
 
 
 class ValidationException(RESTException):
