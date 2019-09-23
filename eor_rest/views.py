@@ -140,7 +140,7 @@ class RestViews(object):
 
             # get object by id
 
-            obj = self.obj = self.delegate.get_obj_by_id()
+            obj = self.obj = self.delegate.get_obj_by_id_or_create()
 
             # deserialize
 

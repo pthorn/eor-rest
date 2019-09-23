@@ -21,6 +21,7 @@ class RestDelegate(object):  #, metaclass=RestDelegateMeta):
     entity_getter = 'rest_get_by_id'
     entity_list_getter = 'rest_get_list'
     permission = None
+    allow_create_on_update = False
 
     def __init__(self, views):
         self.views = views
@@ -180,6 +181,15 @@ class RestDelegate(object):  #, metaclass=RestDelegateMeta):
         }
 
     # update
+
+    def get_obj_by_id_or_create(self):
+        if not self.allow_create_on_update:
+            return self.get_obj_by_id()
+
+        try:
+            return self.get_obj_by_id()
+        except:
+            return self.create_obj()
 
     def before_update(self, obj, deserialized):
         """
