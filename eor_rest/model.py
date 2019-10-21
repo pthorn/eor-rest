@@ -33,12 +33,12 @@ class RestMixin(object):
             .all())
 
     @classmethod
-    def _rest_get_inner_query(cls, session, query_params):
-        return session().query(cls)
+    def _rest_get_inner_query(cls, session, query, query_params):
+        return query
 
     @classmethod
-    def _rest_get_joined_query(cls, filtered_query, query_params):
-        return filtered_query.from_self()
+    def _rest_get_joined_query(cls, session, query, query_params):
+        return query
 
     @classmethod
     def rest_get_list(cls, query_params):
@@ -130,26 +130,31 @@ class RestMixin(object):
 
             return query.order_by(desc(order_attr) if order['dir'] == 'desc' else order_attr)
 
+        def apply_limit(query):
+            if 'limit' in query_params:
+                query = query.limit(query_params['limit'])
+
+            if 'start' in query_params:
+                query = query.offset(query_params['start'])
+
+            return query
+
         # select * from (select * from users limit 10 offset 10) as u left join files f on u.id = f.user_id
         # http://docs.sqlalchemy.org/en/rel_1_0/orm/tutorial.html#using-subqueries
 
-        q_filtered = cls._rest_get_inner_query(config.sqlalchemy_session, query_params)
-        q_filtered = apply_search(q_filtered)
-        q_filtered = apply_filters(q_filtered)
-        q_count = q_filtered  # count() query should not have ORDER BY
-        q_filtered = apply_order(q_filtered)
+        session = config.sqlalchemy_session
 
-        q_limited = q_filtered
+        q_inner = session().query(cls)
+        q_inner = cls._rest_get_inner_query(session, q_inner, query_params)
+        q_inner = apply_search(q_inner)
+        q_inner = apply_filters(q_inner)
+        q_count = q_inner  # count() query should not have ORDER BY
+        q_inner = apply_order(q_inner)
+        q_inner = apply_limit(q_inner)
 
-        if 'limit' in query_params:
-            q_limited = q_limited.limit(query_params['limit'])
-
-        if 'start' in query_params:
-            q_limited = q_limited.offset(query_params['start'])
-
-        q_joined = cls._rest_get_joined_query(q_limited, query_params)  # .from_self()
+        q_joined = q_inner.from_self()
+        q_joined = cls._rest_get_joined_query(session, q_joined, query_params)
         q_joined = apply_order(q_joined)
-        # TODO q_joined = apply_order_2(q_joined)
 
         return q_count.count(), q_joined.all()
 
