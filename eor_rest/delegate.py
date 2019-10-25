@@ -231,11 +231,11 @@ class RestDelegate(object):  #, metaclass=RestDelegateMeta):
         # update object
         self.before_update(obj, deserialized)
         update_entity_from_appstruct(obj, deserialized)
-        self.delegate.after_populated(obj, deserialized)
+        self.after_populated(obj, deserialized)
 
         # save to database
         obj.rest_add(flush=True)
-        self.delegate.after_update(obj, deserialized)
+        self.after_update(obj, deserialized)
 
         return self.update_response(obj)
 
