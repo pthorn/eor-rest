@@ -26,6 +26,7 @@ class RestDelegate(object):  #, metaclass=RestDelegateMeta):
     def __init__(self, views):
         self.views = views
         self.request = views.request
+        self.method = views.request.method
 
     def parse_request_body(self):
         if self.views.request.content_type != 'application/json':
@@ -157,6 +158,8 @@ class RestDelegate(object):  #, metaclass=RestDelegateMeta):
     # create
 
     def create_handler(self):
+        self.mode = 'CREATE'
+
         # parse request body
         json = self.parse_request_body()
 
@@ -214,6 +217,8 @@ class RestDelegate(object):  #, metaclass=RestDelegateMeta):
     # update
 
     def update_handler(self):
+        self.mode = 'UPDATE'
+
         # parse request body
         json = self.parse_request_body()
 
