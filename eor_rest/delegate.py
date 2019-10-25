@@ -7,7 +7,7 @@ from voluptuous import Schema, Required, All, MultipleInvalid, Invalid
 
 from .exceptions import *
 from .serialize import serialize_sqlalchemy_obj, serialize_sqlalchemy_list
-from .deserialize import run_hooks_on_delete
+from .deserialize import update_entity_from_appstruct, run_hooks_on_delete
 
 
 class RestDelegate(object):  #, metaclass=RestDelegateMeta):
@@ -156,9 +156,40 @@ class RestDelegate(object):  #, metaclass=RestDelegateMeta):
 
     # create
 
-    def create_obj(self):
+    def create_handler(self):
+        # parse request body
+        json = self.parse_request_body()
+
+        # check existing
+        # TODO no ID in request; some objects may have ID in request data, need get_id_from_deserialized()
+
+        #try:
+        #    self.get_obj_by_id()
+        #    return self._error_response(code='object-already-exists')
+        #except NoResultFound:
+        #    pass
+
+        # create object
+        obj = self.create_instance()
+
+        # deserialize
+        deserialized = self.deserialize(json)
+
+        # update object
+        self.before_create(obj, deserialized)
+        update_entity_from_appstruct(obj, deserialized)
+        self.after_populated(obj, deserialized)
+
+        # save to database
+        obj.rest_add(flush=True)
+        self.after_create(obj, deserialized)
+
+        return self.create_response(obj)
+
+    def create_instance(self):
         """
-        Create entity object, do not save to database
+        Create entity object
+        Can bwe overridden to e.g. supply constructor parameters
         """
         return self.entity()
 
@@ -181,6 +212,27 @@ class RestDelegate(object):  #, metaclass=RestDelegateMeta):
         }
 
     # update
+
+    def update_handler(self):
+        # parse request body
+        json = self.parse_request_body()
+
+        # get object by id
+        obj = self.get_obj_by_id_or_create()
+
+        # deserialize
+        deserialized = self.deserialize(json)
+
+        # update object
+        self.before_update(obj, deserialized)
+        update_entity_from_appstruct(obj, deserialized)
+        self.delegate.after_populated(obj, deserialized)
+
+        # save to database
+        obj.rest_add(flush=True)
+        self.delegate.after_update(obj, deserialized)
+
+        return self.update_response(obj)
 
     def get_obj_by_id_or_create(self):
         if not self.allow_create_on_update:

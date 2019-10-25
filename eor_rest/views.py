@@ -12,7 +12,6 @@ from pyramid.session import check_csrf_token
 
 from .config import config
 from .exceptions import *
-from .deserialize import update_entity_from_appstruct
 
 
 class RestViews(object):
@@ -85,41 +84,7 @@ class RestViews(object):
 
         try:
             self._security_check()
-
-            # parse request body
-
-            json = self.json = self.delegate.parse_request_body()
-
-            # check existing
-            # TODO no ID in request; some objects may have ID in request data, need get_id_from_deserialized()
-
-            #try:
-            #    self.delegate.get_obj_by_id()
-            #    return self._error_response(code='object-already-exists')
-            #except NoResultFound:
-            #    pass
-
-            # create object
-
-            obj = self.obj = self.delegate.create_obj()
-
-            # deserialize
-
-            deserialized = self.delegate.deserialize(json)
-
-            # update object
-
-            self.delegate.before_create(obj, deserialized)
-
-            update_entity_from_appstruct(obj, deserialized)
-
-            self.delegate.after_populated(obj, deserialized)
-
-            obj.rest_add(flush=True)
-
-            self.delegate.after_create(obj, deserialized)
-
-            return self.delegate.create_response(obj)
+            return self.delegate.create_handler()
         except SQLAlchemyError as e:
             raise RESTException(code='database-error', exc=e)
 
@@ -133,32 +98,7 @@ class RestViews(object):
 
         try:
             self._security_check()
-
-            # parse request body
-
-            json = self.json = self.delegate.parse_request_body()
-
-            # get object by id
-
-            obj = self.obj = self.delegate.get_obj_by_id_or_create()
-
-            # deserialize
-
-            deserialized = self.delegate.deserialize(json)
-
-            # update object
-
-            self.delegate.before_update(obj, deserialized)
-
-            update_entity_from_appstruct(obj, deserialized)
-
-            self.delegate.after_populated(obj, deserialized)
-
-            obj.rest_add(flush=True)
-
-            self.delegate.after_update(obj, deserialized)
-
-            return self.delegate.update_response(obj)
+            return self.delegate.update_handler()
         except SQLAlchemyError as e:
             raise RESTException(code='database-error', exc=e)
 
