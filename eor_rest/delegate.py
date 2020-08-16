@@ -74,6 +74,12 @@ class RestDelegate(object):  #, metaclass=RestDelegateMeta):
             print('pprint:', pprint(e), '\n')
             raise ValidationException(e)
 
+    def update_obj(self, obj, deserialized):
+        """
+        Used by create and update handlers
+        """
+        update_entity_from_appstruct(obj, deserialized)
+
     # get list
 
     def get_list_handler(self):
@@ -180,7 +186,7 @@ class RestDelegate(object):  #, metaclass=RestDelegateMeta):
 
         # update object
         self.before_create(obj, deserialized)
-        update_entity_from_appstruct(obj, deserialized)
+        self.update_obj(obj, deserialized)
         self.after_populated(obj, deserialized)
 
         # save to database
@@ -230,7 +236,7 @@ class RestDelegate(object):  #, metaclass=RestDelegateMeta):
 
         # update object
         self.before_update(obj, deserialized)
-        update_entity_from_appstruct(obj, deserialized)
+        self.update_obj(obj, deserialized)
         self.after_populated(obj, deserialized)
 
         # save to database
