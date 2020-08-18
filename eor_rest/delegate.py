@@ -155,6 +155,14 @@ class RestDelegate(object):  #, metaclass=RestDelegateMeta):
 
     # get item
 
+    def get_item_handler(self):
+        obj = self.get_obj_by_id()
+
+        return {
+            'status': 'ok',
+            'data': self.serialize_obj(obj)
+        }
+
     def get_fields_for_obj(self):
         return {'*': True}
 

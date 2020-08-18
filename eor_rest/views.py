@@ -64,12 +64,7 @@ class RestViews(object):
             self._log_user())
 
         try:
-            obj = self.delegate.get_obj_by_id()
-
-            return {
-                'status': 'ok',
-                'data': self.delegate.serialize_obj(obj)
-            }
+            return self.delegate.get_item_handler()
         except NoResultFound:
             raise RESTException(code='object-not-found')
         except SQLAlchemyError as e:
