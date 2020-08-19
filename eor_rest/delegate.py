@@ -234,24 +234,24 @@ class RestDelegate(object):  #, metaclass=RestDelegateMeta):
         self.mode = 'UPDATE'
 
         # parse request body
-        json = self.parse_request_body()
+        self.request_json = self.parse_request_body()
 
         # get object by id
-        obj = self.get_obj_by_id_or_create()
+        self.obj = self.get_obj_by_id_or_create()
 
         # deserialize
-        deserialized = self.deserialize(json)
+        self.request_deserialized = self.deserialize(self.request_json)
 
         # update object
-        self.before_update(obj, deserialized)
-        self.update_obj(obj, deserialized)
-        self.after_populated(obj, deserialized)
+        self.before_update(self.obj, self.request_deserialized)
+        self.update_obj(self.obj, self.request_deserialized)
+        self.after_populated(self.obj, self.request_deserialized)
 
         # save to database
-        obj.rest_add(flush=True)
-        self.after_update(obj, deserialized)
+        self.obj.rest_add(flush=True)
+        self.after_update(self.obj, self.request_deserialized)
 
-        return self.update_response(obj)
+        return self.update_response(self.obj)
 
     def get_obj_by_id_or_create(self):
         if not self.allow_create_on_update:
