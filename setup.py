@@ -13,7 +13,7 @@ requires = [
 
 setup(
     name='eor-rest',
-    version='3.1.1',
+    version='3.2.0',
     description='A REST backend for the Pyramid framework',
     long_description='',
     classifiers=[
